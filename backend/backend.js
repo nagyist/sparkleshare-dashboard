@@ -10,14 +10,15 @@ Backend = function(name){
 
   this.backend = null;
 
-  if (this.type == 'git') {
-    this.backend = new GitBackend(this.path);
-  }
 };
 
 Backend.prototype = {
   create: function(next) {
-    Dazzle.create(this.name, next);
+    Dazzle.create(this.name, function(error,path) {
+      this.path = path;
+      this.backend = new GitBackend(this.path);
+      next(error);
+    });
   },
 
   getRawData: function(req, ondata, next) {

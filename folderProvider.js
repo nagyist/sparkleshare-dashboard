@@ -43,9 +43,8 @@ FolderProvider.prototype.createNew = function(name,pub,next) {
 
   var provider = this;
   var newFolder = new Backend(name);
-  newFolder.create(function(error,path) {
+  newFolder.create(function(error) {
     if (!error) {
-      newFolder.path = path;
       newFolder.pub = pub;
       newFolder.getId(function (error, id, forBackend) {
         if (!error && id) {
