@@ -14,9 +14,8 @@ module.exports = {
        console.log('stderr: ' + data);
     });
 
-    var out;
     g.stdout.on('data', function(data) {
-       out += data.toString('utf8');
+       console.log('stdout: ' + data);
     });
 
 
