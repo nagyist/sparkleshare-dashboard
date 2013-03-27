@@ -47,7 +47,7 @@ FolderProvider.prototype.createNew = function(name,pub,next) {
     if (!error) {
       newFolder.pub = pub;
       provider.rclient.set("folderName:" + name + ":folder", JSON.stringify(newFolder));
-      provider.rclient.sadd("folderNames:" + name);
+      provider.rclient.sadd("folderNames", name);
       next(null, newFolder);
     } else {
       next(new Error('Creation of Folder failed. Foldername already in use?'));
