@@ -23,7 +23,7 @@ module.exports = {
       if (code) {
         return next(new Error('Dazzle failed'));
       } else {
-        return next(null, config.repository_home+'/'+name+'.git');
+        return next(null, config.dazzle.home+'/'+name');
       }
     });
   }
