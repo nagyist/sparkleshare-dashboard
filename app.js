@@ -338,7 +338,7 @@ app.post('/createFolder', [middleware.isLogged, middleware.isAdmin], function(re
       reRenderForm();
     } else {
       req.flash('info', i18n.__('Folder created'));
-      res.redirect('/folders');
+      res.redirect('/folder');
     }
   });
 });
