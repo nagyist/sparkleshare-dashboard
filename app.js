@@ -53,7 +53,7 @@ app.configure(function(){
 });
 
 var FolderProvider = require('./folderProvider').FolderProvider;
-var folderProvider = new FolderProvider(config.folders);
+var folderProvider = new FolderProvider(redisClient);
 var DeviceProvider = require('./deviceProvider').DeviceProvider;
 var deviceProvider = new DeviceProvider(redisClient);
 var UserProvider = require('./userProvider').UserProvider;

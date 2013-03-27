@@ -2,27 +2,10 @@ var error = require('./error');
 var Backend = require('./backend/backend').Backend;
 
 
-UserProvider = function(redisClient, deviceProvider) {
+FolderProvider = function(redisClient) {
   this.rclient = redisClient;
-  this.deviceProvider = deviceProvider;
 };
 
-
-FolderProvider = function(folders){
-  var onGotId = function (error, id, forBackend) {
-    if (!error && id) {
-      f[id] = forBackend;
-    } else {
-      console.log('could not add folder; no id returned: ' + error);
-    }
-  };
-
-  for (var i = 0; i < folders.length; i++) {
-    var backend = new Backend(folders[i]);
-    var f = this.folders;
-    backend.getId(onGotId, backend);
-  }
-};
 
 FolderProvider.prototype.folders = {};
 
