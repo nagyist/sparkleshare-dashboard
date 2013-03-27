@@ -31,8 +31,8 @@ FolderProvider.prototype.findAll = function(next) {
   });
 };
 
-FolderProvider.prototype.findByName = function(id, next) {
-  this.rclient.get("folderName:" + id + ":folder", function(error, data) {
+FolderProvider.prototype.findByName = function(name, next) {
+  this.rclient.get("folderName:" + name + ":folder", function(error, data) {
     if (error) { return next(error); }
     if (!data) { return next(); }
     next(null, new Backend(JSON.parse(data)));
@@ -46,8 +46,8 @@ FolderProvider.prototype.createNew = function(name,pub,next) {
   newFolder.create(function(error) {
     if (!error) {
       newFolder.pub = pub;
-      provider.rclient.set("folderName:" + id + ":folder", JSON.stringify(newFolder));
-      provider.rclient.sadd("folderNames:" + id);
+      provider.rclient.set("folderName:" + name + ":folder", JSON.stringify(newFolder));
+      provider.rclient.sadd("folderNames:" + name);
       next(null, newFolder);
     } else {
       next(new Error('Creation of Folder failed. Foldername already in use?'));
