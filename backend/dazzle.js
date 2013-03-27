@@ -1,9 +1,6 @@
 var config = require('../config');
 
-Dazzle = function () {
-};
-
-Dazzle.prototype = {
+module.exports = {
   execDazzle: function(params, next) {
   
     var g = spawn(config.dazzle.bin, params, { encoding: 'binary', env: {
@@ -29,5 +26,3 @@ Dazzle.prototype = {
     this.execDazzle(['create', name], next);
   }
 };
-
-exports.Dazzle = Dazzle;
