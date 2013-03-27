@@ -1,9 +1,12 @@
 exports.sessionSecret = 'JustSomeRandomString';
 
-exports.folders = [
-  { type: 'git', name: 'Public GIT folder', path: '/home/nexus/Desktop/play/SparkleDashboard-x/repos/g1', pub: true },
-  { type: 'git', name: 'Private GIT folder', path: '/home/nexus/Desktop/play/SparkleDashboard-x/repos/g2', pub: false }
-];
+
+exports.dazzle = {
+  'home': '/home/storage',
+  'user': 'storage',
+  'group': 'storage',
+  'bin': '/usr/local/bin/dazzle.sh'
+}
 
 exports.listen = {
   port: 3000,

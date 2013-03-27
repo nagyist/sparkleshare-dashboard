@@ -2,6 +2,9 @@ h1 #{__i('Folders')}
 
 include includes/toolbox
 
+p
+  a(href=basepath + "/createFolder") #{__i('Add new Folder')}
+
 ul.folders
   - each folder in folders
     li(class=folder.type)

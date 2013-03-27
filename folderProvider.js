@@ -1,6 +1,13 @@
 var error = require('./error');
 var Backend = require('./backend/backend').Backend;
 
+
+UserProvider = function(redisClient, deviceProvider) {
+  this.rclient = redisClient;
+  this.deviceProvider = deviceProvider;
+};
+
+
 FolderProvider = function(folders){
   var onGotId = function (error, id, forBackend) {
     if (!error && id) {
@@ -20,27 +27,61 @@ FolderProvider = function(folders){
 FolderProvider.prototype.folders = {};
 
 FolderProvider.prototype.findAll = function(next) {
-  var f = {};
-  for (var id in this.folders) {
-    if (this.folders.hasOwnProperty(id)) {
-      f[id] = this.folders[id];
+
+  var provider = this;
+  provider.rclient.smembers("folderIds", function(error, uids)  {
+    if (error) { return next(error); }
+    var r = [];
+    var count = uids.length;
+    if (count === 0) {
+      next (null, r);
     }
-  }
-  next(null, f);
+    uids.forEach(function(uid) {
+      provider.findById(uid, function(error, folder) {
+        if (error) { return next(error); }
+        r.push(folder);
+        if (--count === 0) {
+          next(null, r);
+        }
+      });
+    });
+  });
 };
 
 FolderProvider.prototype.findById = function(id, next) {
-  var result = null;
-
-  if (id in this.folders) {
-    result = this.folders[id];
-  }
-
-  if (!result) {
-    next(new error.NotFound('No such folder'));
-  } else {
-    next(null, result);
-  }
+  this.rclient.get("folderId:" + id + ":device", function(error, data) {
+    if (error) { return next(error); }
+    if (!data) { return next(); }
+    next(null, new Backend(JSON.parse(data)));
+  });
 };
+
+FolderProvider.prototype.createNew = function(name,pub,next) {
+
+  var provider = this;
+  var newFolder = new Backend();
+  newFolder.type = 'git';
+  newFolder.name = name;
+//TODO GET BY DAZZLE!  newFolder.path = config.repository_home+'/'+name+'.git';
+  newFolder.pub = pub;
+  newFolder.create(function(error,path) {
+    if (!error) {
+      newFolder.path = path;
+      newFolder.getId(function (error, id, forBackend) {
+        if (!error && id) {
+          provider.rclient.set("folderId:" + id + ":folder", JSON.stringify(newFolder));
+          provider.rclient.sadd("folderIds:" + id);
+          next(null, newFolder);
+        } else {
+          console.log('could not add folder; no id returned, not saved: ' + error);
+          next(new Error('Folder creation failed'));
+        }
+      });
+    } else {
+      next(new Error('Foldername already in use'));
+    }
+  });
+};
+
 
 exports.FolderProvider = FolderProvider;

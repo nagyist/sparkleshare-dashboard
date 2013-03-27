@@ -1,4 +1,5 @@
 var GitBackend = require('./git').GitBackend;
+var Dazzle = require('./dazzle').Dazzle;
 
 Backend = function(config){
   this.id = null;
@@ -15,6 +16,10 @@ Backend = function(config){
 };
 
 Backend.prototype = {
+  create: function(next) {
+    this.dazzle.create(this.name, this.pub, next);
+  },
+
   getRawData: function(req, ondata, next) {
     this.backend.getRawData(req, ondata, next);
   },

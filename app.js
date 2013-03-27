@@ -322,6 +322,27 @@ app.post('/createUser', [middleware.isLogged, middleware.isAdmin], function(req,
   });
 });
 
+app.get('/createFolder', [middleware.isLogged, middleware.isAdmin], function(req, res) {
+  res.render('createFolder', { formval: {} });
+});
+
+app.post('/createFolder', [middleware.isLogged, middleware.isAdmin], function(req, res) {
+  var reRenderForm = function() {
+    res.render('createFolder', {
+      formval: req.body
+    });
+  };
+  folderProvider.createNew(req.body.foldername, req.body.pub == 't', [], function(error, folder) {
+    if (error) {
+      req.flash('error', error);
+      reRenderForm();
+    } else {
+      req.flash('info', i18n.__('Folder created'));
+      res.redirect('/folders');
+    }
+  });
+});
+
 app.get('/publicFolder/:folderId', function(req, res, next) {
   folderProvider.findById(req.params.folderId, function(error, folder) {
     if (!folder.pub) {
