@@ -332,7 +332,7 @@ app.post('/createFolder', [middleware.isLogged, middleware.isAdmin], function(re
       formval: req.body
     });
   };
-  folderProvider.createNew(req.body.foldername, req.body.pub == 't', [], function(error, folder) {
+  folderProvider.createNew(req.body.foldername, req.body.pub == 't', function(error, folder) {
     if (error) {
       req.flash('error', error);
       reRenderForm();
