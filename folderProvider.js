@@ -42,14 +42,13 @@ FolderProvider.prototype.findById = function(id, next) {
 FolderProvider.prototype.createNew = function(name,pub,next) {
 
   var provider = this;
-  var newFolder = new Backend();
-  newFolder.type = 'git';
-  newFolder.name = name;
-//TODO GET BY DAZZLE!  newFolder.path = config.repository_home+'/'+name+'.git';
-  newFolder.pub = pub;
+  var newFolder = new Backend(name);
   newFolder.create(function(error,path) {
     if (!error) {
-      newFolder.path = path;
+//TODO GET BY DAZZLE!
+      //newFolder.path = path;
+      newFolder.path = config.repository_home+'/'+name+'.git';
+      newFolder.pub = pub;
       newFolder.getId(function (error, id, forBackend) {
         if (!error && id) {
           provider.rclient.set("folderId:" + id + ":folder", JSON.stringify(newFolder));
