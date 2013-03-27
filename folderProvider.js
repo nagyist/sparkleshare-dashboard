@@ -35,7 +35,7 @@ FolderProvider.prototype.findByName = function(name, next) {
   this.rclient.get("folderName:" + name + ":folder", function(error, data) {
     if (error) { return next(error); }
     if (!data) { return next(); }
-    next(null, new Backend(JSON.parse(data)));
+    next(null, new Backend(null,JSON.parse(data)));
   });
 };
 

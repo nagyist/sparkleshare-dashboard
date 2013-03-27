@@ -1,7 +1,7 @@
 var GitBackend = require('./git').GitBackend;
 var Dazzle = require('./dazzle');
 
-Backend = function(name){
+Backend = function(name,data){
   this.type = 'git';
   this.name = name;
   this.path = null;
@@ -9,6 +9,12 @@ Backend = function(name){
 
   this.backend = null;
 
+  if(data) {
+    this.name = data.name;
+    this.path = data.path;
+    this.pub = data.pub;
+    this.backend = data.backend
+  }
 };
 
 Backend.prototype = {
