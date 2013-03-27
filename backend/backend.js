@@ -14,9 +14,10 @@ Backend = function(name){
 
 Backend.prototype = {
   create: function(next) {
+    var b = this;
     Dazzle.create(this.name, function(error,path) {
-      this.path = path;
-      this.backend = new GitBackend(this.path);
+      b.path = path;
+      b.backend = new GitBackend(path);
       next(error);
     });
   },
