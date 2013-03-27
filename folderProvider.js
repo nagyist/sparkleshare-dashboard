@@ -46,18 +46,11 @@ FolderProvider.prototype.createNew = function(name,pub,next) {
   newFolder.create(function(error) {
     if (!error) {
       newFolder.pub = pub;
-      newFolder.getId(function (error, id, forBackend) {
-        if (!error && id) {
-          provider.rclient.set("folderName:" + id + ":folder", JSON.stringify(newFolder));
-          provider.rclient.sadd("folderNames:" + id);
-          next(null, newFolder);
-        } else {
-          console.log('could not add folder; no id returned, not saved: ' + error);
-          next(new Error('Folder creation failed'));
-        }
-      });
+      provider.rclient.set("folderName:" + id + ":folder", JSON.stringify(newFolder));
+      provider.rclient.sadd("folderNames:" + id);
+      next(null, newFolder);
     } else {
-      next(new Error('Foldername already in use'));
+      next(new Error('Creation of Folder failed. Foldername already in use?'));
     }
   });
 };
