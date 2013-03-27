@@ -3,7 +3,7 @@ var spawn = require('child_process').spawn;
 
 module.exports = {
   create: function(name, next) {
-  
+
     var g = spawn(config.dazzle.bin, ['create', name], { encoding: 'binary', env: {
       DAZZLE_HOME: config.dazzle.home,
       DAZZLE_USER: config.dazzle.user,

@@ -2,7 +2,6 @@ var GitBackend = require('./git').GitBackend;
 var Dazzle = require('./dazzle');
 
 Backend = function(name){
-  this.id = null;
   this.type = 'git';
   this.name = name;
   this.path = null;
@@ -48,18 +47,6 @@ Backend.prototype = {
 
   getFolderItemCount: function(req, next) {
     this.backend.getFolderItemCount(req, next);
-  },
-
-  getId: function(next, forBackend) {
-    var b = this;
-    if (!this.id) {
-      this.backend.getId(function(error, id){
-        b.id = id;
-        next(null, id, forBackend);
-      });
-    } else {
-      next(null, this.id, forBackend);
-    }
   }
 };
 

@@ -343,8 +343,8 @@ app.post('/createFolder', [middleware.isLogged, middleware.isAdmin], function(re
   });
 });
 
-app.get('/publicFolder/:folderId', function(req, res, next) {
-  folderProvider.findById(req.params.folderId, function(error, folder) {
+app.get('/publicFolder/:folderName', function(req, res, next) {
+  folderProvider.findByName(req.params.folderName, function(error, folder) {
     if (!folder.pub) {
       next(new errors.Permission('This is not a public folder'));
     } else {
@@ -368,8 +368,8 @@ app.get('/publicFolder/:folderId', function(req, res, next) {
   });
 });
 
-app.get('/recentchanges/:folderId?', middleware.isLogged, middleware.checkFolderAcl, function(req, res, next) {
-  folderProvider.findById(req.params.folderId, function(error, folder) {
+app.get('/recentchanges/:folderName?', middleware.isLogged, middleware.checkFolderAcl, function(req, res, next) {
+  folderProvider.findByName(req.params.folderName, function(error, folder) {
     if (error) { return next(error); }
     folder.getRecentChanges(req, function(error, data) {
       if (error) { return next(error); }
@@ -382,8 +382,8 @@ app.get('/recentchanges/:folderId?', middleware.isLogged, middleware.checkFolder
   });
 });
 
-app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, function(req, res, next) {
-  if (!req.params.folderId) {
+app.get('/folder/:folderName?', middleware.isLogged, middleware.checkFolderAcl, function(req, res, next) {
+  if (!req.params.folderName) {
     folderProvider.findAll(function(error, folders){
       if (error) { return next(error); }
 
@@ -394,7 +394,7 @@ app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, fu
       });
     });
   } else {
-    folderProvider.findById(req.params.folderId, function(error, folder) {
+    folderProvider.findByName(req.params.folderName, function(error, folder) {
       if (error) { return next(error); }
 
       if (req.param('type') == 'file') {
@@ -442,8 +442,8 @@ app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, fu
   }
 });
 
-app.get('/download/:folderId', middleware.isLogged, middleware.checkFolderAcl, function(req, res, next) {
-  folderProvider.findById(req.params.folderId, function(error, folder) {
+app.get('/download/:folderName', middleware.isLogged, middleware.checkFolderAcl, function(req, res, next) {
+  folderProvider.findByName(req.params.folderName, function(error, folder) {
     if (error) { return next(error); }
     var headersSent = false;
     var maybeSentHeaders = function() {
@@ -456,7 +456,7 @@ app.get('/download/:folderId', middleware.isLogged, middleware.checkFolderAcl, f
       if (path && path != '') {
         filename += '-' + path.replace(/[^\w\d-]/, '_');
       }
-      filename += '-' + req.params.folderId.substring(0, 8) + '.zip';
+      filename += '-' + req.params.folderName + '.zip';
       res.writeHead(200, {
         'Content-Type': 'application/zip',
         'Content-Disposition': 'attachment; filename="' + filename + '"'

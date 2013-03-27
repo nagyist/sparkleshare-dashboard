@@ -12,7 +12,7 @@ FolderProvider.prototype.folders = {};
 FolderProvider.prototype.findAll = function(next) {
 
   var provider = this;
-  provider.rclient.smembers("folderIds", function(error, uids)  {
+  provider.rclient.smembers("folderNames", function(error, uids)  {
     if (error) { return next(error); }
     var r = [];
     var count = uids.length;
@@ -20,7 +20,7 @@ FolderProvider.prototype.findAll = function(next) {
       next (null, r);
     }
     uids.forEach(function(uid) {
-      provider.findById(uid, function(error, folder) {
+      provider.findByName(uid, function(error, folder) {
         if (error) { return next(error); }
         r.push(folder);
         if (--count === 0) {
@@ -31,8 +31,8 @@ FolderProvider.prototype.findAll = function(next) {
   });
 };
 
-FolderProvider.prototype.findById = function(id, next) {
-  this.rclient.get("folderId:" + id + ":device", function(error, data) {
+FolderProvider.prototype.findByName = function(id, next) {
+  this.rclient.get("folderName:" + id + ":folder", function(error, data) {
     if (error) { return next(error); }
     if (!data) { return next(); }
     next(null, new Backend(JSON.parse(data)));
@@ -48,8 +48,8 @@ FolderProvider.prototype.createNew = function(name,pub,next) {
       newFolder.pub = pub;
       newFolder.getId(function (error, id, forBackend) {
         if (!error && id) {
-          provider.rclient.set("folderId:" + id + ":folder", JSON.stringify(newFolder));
-          provider.rclient.sadd("folderIds:" + id);
+          provider.rclient.set("folderName:" + id + ":folder", JSON.stringify(newFolder));
+          provider.rclient.sadd("folderNames:" + id);
           next(null, newFolder);
         } else {
           console.log('could not add folder; no id returned, not saved: ' + error);
