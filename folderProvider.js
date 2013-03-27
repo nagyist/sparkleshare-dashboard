@@ -45,9 +45,7 @@ FolderProvider.prototype.createNew = function(name,pub,next) {
   var newFolder = new Backend(name);
   newFolder.create(function(error,path) {
     if (!error) {
-//TODO GET BY DAZZLE!
-      //newFolder.path = path;
-      newFolder.path = config.repository_home+'/'+name+'.git';
+      newFolder.path = path;
       newFolder.pub = pub;
       newFolder.getId(function (error, id, forBackend) {
         if (!error && id) {
