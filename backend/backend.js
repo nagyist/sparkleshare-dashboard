@@ -6,14 +6,13 @@ Backend = function(name,data){
   this.name = name;
   this.path = null;
   this.pub = null;
-
   this.backend = null;
 
   if(data) {
     this.name = data.name;
     this.path = data.path;
     this.pub = data.pub;
-    this.backend = data.backend
+    this.backend = new GitBackend(data.backend.path);
   }
 };
 
