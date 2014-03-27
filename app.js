@@ -45,7 +45,6 @@ i18n.configure({
 });
 
 
-
 // Configuration
 app.configure(function(){
   var lf = utils.getLoggingFormat();
@@ -72,7 +71,7 @@ app.configure(function(){
   }));
   app.use(express.static(__dirname + '/public'));
   app.use(i18n.init);
-  app.use(express.session({ secret: 'secret' }));
+  app.use(session);
 
   app.use(function(req, res, next){
     res.locals.session = req.session;
