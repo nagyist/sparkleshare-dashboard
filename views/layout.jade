@@ -12,6 +12,11 @@ html(lang="en")
       include includes/header
       #wrapper
         #content
+          - var flash = locals.flash()
+          each flashType in ['info','warn','error']
+            if flash[flashType] && flash[flashType].length
+              p.flash(class=flashType)
+                = flash[flashType]
           != body
           block main
         include includes/footer
