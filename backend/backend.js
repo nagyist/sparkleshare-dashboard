@@ -1,20 +1,31 @@
 var GitBackend = require('./git').GitBackend;
+var Dazzle = require('./dazzle');
 
-Backend = function(config){
-  this.id = null;
-  this.type = config.type;
-  this.name = config.name;
-  this.path = config.path;
-  this.pub = config.pub;
-
+Backend = function(name,data){
+  this.type = 'git';
+  this.name = name;
+  this.path = null;
+  this.pub = null;
   this.backend = null;
 
-  if (this.type == 'git') {
-    this.backend = new GitBackend(this.path);
+  if(data) {
+    this.name = data.name;
+    this.path = data.path;
+    this.pub = data.pub;
+    this.backend = new GitBackend(data.backend.path);
   }
 };
 
 Backend.prototype = {
+  create: function(next) {
+    var b = this;
+    Dazzle.create(this.name, function(error,path) {
+      b.path = path;
+      b.backend = new GitBackend(path);
+      next(error);
+    });
+  },
+
   getRawData: function(req, ondata, next) {
     this.backend.getRawData(req, ondata, next);
   },
@@ -41,18 +52,6 @@ Backend.prototype = {
 
   getFolderItemCount: function(req, next) {
     this.backend.getFolderItemCount(req, next);
-  },
-
-  getId: function(next, forBackend) {
-    var b = this;
-    if (!this.id) {
-      this.backend.getId(function(error, id){
-        b.id = id;
-        next(null, id, forBackend);
-      });
-    } else {
-      next(null, this.id, forBackend);
-    }
   }
 };
 

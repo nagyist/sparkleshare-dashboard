@@ -93,7 +93,7 @@ app.configure(function(){
 });
 
 var FolderProvider = require('./folderProvider').FolderProvider;
-var folderProvider = new FolderProvider(config.folders);
+var folderProvider = new FolderProvider(redisClient);
 var DeviceProvider = require('./deviceProvider').DeviceProvider;
 var deviceProvider = new DeviceProvider(redisClient);
 var UserProvider = require('./userProvider').UserProvider;
@@ -337,8 +337,29 @@ app.post('/createUser', [middleware.isLogged, middleware.isAdmin], function(req,
   });
 });
 
-app.get('/publicFolder/:folderId', function(req, res, next) {
-  folderProvider.findById(req.params.folderId, function(error, folder) {
+app.get('/createFolder', [middleware.isLogged, middleware.isAdmin], function(req, res) {
+  res.render('createFolder', { formval: {} });
+});
+
+app.post('/createFolder', [middleware.isLogged, middleware.isAdmin], function(req, res) {
+  var reRenderForm = function() {
+    res.render('createFolder', {
+      formval: req.body
+    });
+  };
+  folderProvider.createNew(req.body.foldername, req.body.pub == 't', function(error, folder) {
+    if (error) {
+      req.flash('error', error);
+      reRenderForm();
+    } else {
+      req.flash('info', i18n.__('Folder created'));
+      res.redirect('/folder');
+    }
+  });
+});
+
+app.get('/publicFolder/:folderName', function(req, res, next) {
+  folderProvider.findByName(req.params.folderName, function(error, folder) {
     if (!folder.pub) {
       next(new errors.Permission('This is not a public folder'));
     } else {
@@ -362,8 +383,8 @@ app.get('/publicFolder/:folderId', function(req, res, next) {
   });
 });
 
-app.get('/recentchanges/:folderId?', middleware.isLogged, middleware.checkFolderAcl, function(req, res, next) {
-  folderProvider.findById(req.params.folderId, function(error, folder) {
+app.get('/recentchanges/:folderName?', middleware.isLogged, middleware.checkFolderAcl, function(req, res, next) {
+  folderProvider.findByName(req.params.folderName, function(error, folder) {
     if (error) { return next(error); }
     folder.getRecentChanges(req, function(error, data) {
       if (error) { return next(error); }
@@ -376,8 +397,8 @@ app.get('/recentchanges/:folderId?', middleware.isLogged, middleware.checkFolder
   });
 });
 
-app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, function(req, res, next) {
-  if (!req.params.folderId) {
+app.get('/folder/:folderName?', middleware.isLogged, middleware.checkFolderAcl, function(req, res, next) {
+  if (!req.params.folderName) {
     folderProvider.findAll(function(error, folders){
       if (error) { return next(error); }
 
@@ -388,7 +409,7 @@ app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, fu
       });
     });
   } else {
-    folderProvider.findById(req.params.folderId, function(error, folder) {
+    folderProvider.findByName(req.params.folderName, function(error, folder) {
       if (error) { return next(error); }
 
       if (req.param('type') == 'file') {
@@ -436,8 +457,8 @@ app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, fu
   }
 });
 
-app.get('/download/:folderId', middleware.isLogged, middleware.checkFolderAcl, function(req, res, next) {
-  folderProvider.findById(req.params.folderId, function(error, folder) {
+app.get('/download/:folderName', middleware.isLogged, middleware.checkFolderAcl, function(req, res, next) {
+  folderProvider.findByName(req.params.folderName, function(error, folder) {
     if (error) { return next(error); }
     var headersSent = false;
     var maybeSentHeaders = function() {
@@ -450,7 +471,7 @@ app.get('/download/:folderId', middleware.isLogged, middleware.checkFolderAcl, f
       if (path && path != '') {
         filename += '-' + path.replace(/[^\w\d-]/, '_');
       }
-      filename += '-' + req.params.folderId.substring(0, 8) + '.zip';
+      filename += '-' + req.params.folderName + '.zip';
       res.writeHead(200, {
         'Content-Type': 'application/zip',
         'Content-Disposition': 'attachment; filename="' + filename + '"'
