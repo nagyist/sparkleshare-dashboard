@@ -13,6 +13,7 @@ var utils = require('./utils');
 
 var RedisStore = require('connect-redis')(express);
 var redis = require('redis'), redisClient = redis.createClient();
+var session = express.session({ secret: config.sessionSecret, store: new RedisStore() });
 
 var app = null;
 if (config.https.enabled) {
@@ -37,8 +38,6 @@ if (config.https.enabled) {
   });
 }
 
-var session = express.session({ secret: config.sessionSecret, store: new RedisStore() });
-
 i18n.configure({
     locales: ['en', 'cs', 'de', 'el']
 });
@@ -59,7 +58,8 @@ app.configure(function(){
     }
     next();
   });
-  app.use(express.bodyParser());
+  app.use(express.urlencoded());
+  app.use(express.json());
   app.use(express.methodOverride());
   app.use(express.cookieParser());
   app.use(flash());
@@ -503,7 +503,10 @@ app.get('/linkedDevices', middleware.isLogged, function(req, res, next) {
 
 app.get('/linkDevice', middleware.isLogged, function(req, res) {
   var schema = config.https.enabled ? 'https' : 'http';
-  var url = schema + '://' + req.header('host');
+  var url = schema + '://' + req.host
+  if (config.listen.port != 80) {
+    url += ":" + config.listen.port;
+  }
 
   if (config.externalUrl) {
     url = config.externalUrl;
