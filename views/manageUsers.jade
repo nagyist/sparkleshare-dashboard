@@ -1,24 +1,27 @@
-h1 #{__i('Known Users')}
+extends layout
 
-table
-  tr
-    th #{__i('Username')}
-    th #{__i('Name')}
-    th #{__i('Admin')}
-    th #{__i('Modify')}
-    th #{__i('Delete')}
-  - each user in users
+block main
+  h1 #{__i('Known Users')}
+
+  table
     tr
-      td= user.login
-      td= user.name
-      td
-        - if (user.admin)
-          | #{__i('YES')}
-        - else
-          | #{__i('no')}
-      td
-        a(href=basepath + "/modifyUser/" + user.uid) #{__i('Modify')}
-      td
-        a(href=basepath + "/deleteUser/" + user.uid) #{__i('Delete')}
-p
-  a(href=basepath + "/createUser") #{__i('Add new user')}
+      th #{__i('Username')}
+      th #{__i('Name')}
+      th #{__i('Admin')}
+      th #{__i('Modify')}
+      th #{__i('Delete')}
+    - each user in users
+      tr
+        td= user.login
+        td= user.name
+        td
+          - if (user.admin)
+            | #{__i('YES')}
+          - else
+            | #{__i('no')}
+        td
+          a(href=basepath + "/modifyUser/" + user.uid) #{__i('Modify')}
+        td
+          a(href=basepath + "/deleteUser/" + user.uid) #{__i('Delete')}
+  p
+    a(href=basepath + "/createUser") #{__i('Add new user')}

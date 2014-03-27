@@ -1,4 +1,6 @@
-.loginscreen.regscreen
+extends layout
+
+block main
   h1 #{__i('Create first user')}
 
   form(method="post", action=basepath + "/createFirstUser")
@@ -16,51 +18,4 @@
       input(name="realname", value=formval.name, id="realname")
     input.register(type="submit", value=__i('Create user'))
 
-  script(type="text/javascript")
-    $("#login").focus(function() {
-      $("#loginlabel").fadeOut();
-    });
-    $("#login").blur(function() {
-      if ($("#login").val().length == 0) {
-        $("#loginlabel").fadeIn();
-      }
-    });
-    $("#passwd1").focus(function() {
-      $("#passwd1label").fadeOut();
-    });
-    $("#passwd1").blur(function() {
-      if ($("#passwd1").val().length == 0) {
-        $("#passwd1label").fadeIn();
-      }
-    });
-    $("#passwd2").focus(function() {
-      $("#passwd2label").fadeOut();
-    });
-    $("#passwd2").blur(function() {
-      if ($("#passwd2").val().length == 0) {
-        $("#passwd2label").fadeIn();
-      }
-    });
-    $("#realname").focus(function() {
-      $("#realnamelabel").fadeOut();
-    });
-    $("#realname").blur(function() {
-      if ($("#realname").val().length == 0) {
-        $("#realnamelabel").fadeIn();
-      }
-    });
-
-    $(function() {
-      if ($("#login").val().length != 0) {
-        $("#loginlabel").hide();
-      }
-      if ($("#passwd1").val().length != 0) {
-        $("#passwd1label").hide();
-      }
-      if ($("#passwd2").val().length != 0) {
-        $("#passwd2label").hide();
-      }
-      if ($("#realname").val().length != 0) {
-        $("#realnamelabel").hide();
-      }
-    });
+  script(type="text/javascript" src=basepath + "javascripts/createUser.js")

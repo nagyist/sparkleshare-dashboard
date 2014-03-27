@@ -1,62 +1,26 @@
-h1 #{__i('Link with your mobile SparkleShare device')}
+extends layout
 
-script(type="text/javascript", src=basepath + "/javascripts/qrcode.js")
-script(type="text/javascript", src=basepath + "/javascripts/qrcanvas.js")
+block main
+  h1 #{__i('Link with your mobile SparkleShare device')}
 
-p
-  strong #{__i('URL:')} 
-  #{url}
-
-p
-  strong #{__i('Link code:')} 
-  span#linkcode
-
-#qrpart
-  #qrborder
-    #linkqr
+  script(type="text/javascript", src=basepath + "/javascripts/qrcode.js")
+  script(type="text/javascript", src=basepath + "/javascripts/qrcanvas.js")
 
   p
-    | #{__i('New code will be generated in')}
-    span#timeleft 0
-    | #{__i('seconds')}.
+    strong #{__i('URL:')} 
+    #{url}
 
-script(type="text/javascript")
-  $(function() {
-    function updateQr() {
-      var lqr = $('#linkqr');
-      if (lqr.data('state') != 'updating') {
-        lqr.data('state', 'updating');
-        lqr.html('<img src="#{basepath}/images/throbber.gif" alt="loading"/>');
-        $('#linkcode').html('-----');
-        $('#timeleft').html('?');
+  p
+    strong #{__i('Link code:')} 
+    span#linkcode
 
-        $.ajax({
-          url: "#{basepath}/getLinkCode",
-          dataType: 'json',
-          success: function(data) {
-            $('#linkqr').html('');
-            $('#linkcode').html(data.code);
-            $('#timeleft').html(data.validFor);
-            append_qrcode(4, 'linkqr', 'SSHARE:' + data.url + '#' + data.code);
-            $('#linkqr').data('validLeft', data.validFor);
-            lqr.data('state', 'updated');
-          }
-        });
-      }
-    }
+  #qrpart
+    #qrborder
+      #linkqr
 
-    function checkForUpdateQr() {
-      var vl = $('#linkqr').data('validLeft');
-      if (!vl || vl <= 1) {
-        updateQr();
-      } else {
-        $('#linkqr').data('validLeft', vl - 1);
-        $('#timeleft').html(vl - 1);
-      }
-    }
+    p
+      | #{__i('New code will be generated in')}
+      span#timeleft 0
+      | #{__i('seconds')}.
 
-    checkForUpdateQr();
-    setInterval(function() {
-      checkForUpdateQr();
-    }, 1000);
-  });
+  script(type="text/javascript" src="javascripts/linkDevice.js")

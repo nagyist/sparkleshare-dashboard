@@ -1,12 +1,15 @@
-h1 #{__i('Modify device')} 
-  - if (d.name)
-    | "#{d.name}" (#{d.ident})
-  - else
-    | "#{d.ident}"
+extends layout
 
-form(method="post", action=basepath + "/modifyDevice/" + d.id)
-  p
-    label #{__i('Device name')}:
-    input(name="name", value=d.name)
-  p
-    input(type="submit", value=__i('Modify'))
+block main
+  h1 #{__i('Modify device')} 
+    - if (d.name)
+      | "#{d.name}" (#{d.ident})
+    - else
+      | "#{d.ident}"
+
+  form(method="post", action=basepath + "/modifyDevice/" + d.id)
+    p
+      label #{__i('Device name')}:
+      input(name="name", value=d.name)
+    p
+      input(type="submit", value=__i('Modify'))

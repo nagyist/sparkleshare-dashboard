@@ -2,6 +2,9 @@
  * Module dependencies.
  */
 var express = require('express');
+var flash = require('connect-flash');
+var sass = require('node-sass');
+
 var querystring = require('querystring');
 var i18n = require("i18n");
 
@@ -15,11 +18,24 @@ var redis = require('redis'), redisClient = redis.createClient();
 var app = null;
 if (config.https.enabled) {
   var fs = require("fs");
-  var privateKey = fs.readFileSync(config.https.key);
-  var certificate = fs.readFileSync(config.https.cert);
-  app = module.exports = express.createServer({ key: privateKey, cert: certificate });
+  var https = require("https");
+
+  var privateKey = fs.readFileSync(config.https.key).toString();
+  var certificate = fs.readFileSync(config.https.cert).toString();
+  var options = {
+      key : privateKey,
+      cert : certificate
+  }
+  app = express()
+  var server = https.createServer(options,app).listen(config.listen.port, function(){
+    console.log("Express server listening on port " + config.listen.port);
+  });
 } else {
-  app = module.exports = express.createServer();
+  http = require('http')
+  app = express()
+  var server = http.createServer(app).listen(app.get('port'), function(){
+    console.log("Express server listening on port " + config.listen.port);
+  });
 }
 
 var session = express.session({ secret: config.sessionSecret, store: new RedisStore() });
@@ -27,6 +43,8 @@ var session = express.session({ secret: config.sessionSecret, store: new RedisSt
 i18n.configure({
     locales: ['en', 'cs', 'de', 'el']
 });
+
+
 
 // Configuration
 app.configure(function(){
@@ -46,9 +64,32 @@ app.configure(function(){
   app.use(express.bodyParser());
   app.use(express.methodOverride());
   app.use(express.cookieParser());
-  app.use(express.compiler({ src: __dirname + '/public', enable: ['sass'] }));
+  app.use(flash());
+  app.use(require('sass-middleware')({
+      src: __dirname + '/public/sass',
+      dest:  __dirname + '/public/',
+      debug: true
+  }));
   app.use(express.static(__dirname + '/public'));
   app.use(i18n.init);
+  app.use(express.session({ secret: 'secret' }));
+
+  app.use(function(req, res, next){
+    res.locals.session = req.session;
+    res.locals.user = req.session.user;
+    res.locals.basepath = app.get('basepath');
+    res.locals.convertSize = function(bytes) {
+      var unit = 0;
+      while (unit < 3 && bytes >= 1024) {
+        unit++;
+        bytes /= 1024;
+      };
+      return (Math.round(bytes * 100, 2) / 100).toString() + " " + ["", "Ki", "Mi", "Gi"][unit] + "B";
+    }
+    res.locals.__i = i18n.__;
+    res.locals.__n = i18n.__n;
+    next();
+  });
   app.use(app.router);
 });
 
@@ -87,31 +128,6 @@ function auth(login, pass, next) {
   });
 }
 
-// Dynamic helpers
-app.dynamicHelpers({
-  messages: require('express-messages'),
-  user: function(req, res) {
-    return req.currentUser;
-  },
-  basepath: function() {
-    return this.set('basepath');
-  }
-});
-
-app.helpers({
-  convertSize: function(bytes) {
-    var unit = 0;
-    while (unit < 3 && bytes >= 1024) {
-      unit++;
-      bytes /= 1024;
-    }
-
-    return (Math.round(bytes * 100, 2) / 100).toString() + " " + ["", "Ki", "Mi", "Gi"][unit] + "B";
-  },
-  __i: i18n.__,
-  __n: i18n.__n
-});
-
 // Routes
 app.all(/^(?!\/api\/).+/, function(req, res, next) {
   session(req, res, next);
@@ -125,7 +141,7 @@ app.get('/', function(req, res){
 
 app.get('/logout', function(req, res){
   req.session.destroy(function(){
-    res.redirect('home');
+    res.redirect('login');
   });
 });
 
@@ -459,7 +475,7 @@ app.get('/linkedDevices', middleware.isLogged, function(req, res, next) {
   if (req.currentUser.admin) {
     deviceProvider.findAll(function(error, devices) {
       if (error) { return next(error); }
-      
+
       r = function(logins) {
         res.render('linkedDevices', {
           devices: devices,
@@ -567,7 +583,7 @@ app.get('*', function(req, res, next){
 
 function runApp() {
   app.listen(config.listen.port, config.listen.host, function() {
-    console.log("SparkleShare Dashboard listening on port %d in %s mode", app.address().port, app.settings.env);
+    console.log("SparkleShare Dashboard listening on port %d in %s mode", config.listen.port, app.settings.env);
   });
 
   if (config.fanout.enabled) {

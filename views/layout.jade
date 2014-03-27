@@ -1,5 +1,5 @@
-!!!
-html(xmlns="http://www.w3.org/1999/xhtml")
+doctype html
+html(lang="en")
   head
     title= __i('SparkleShare Dashboard')
     meta(content="text/html; charset=UTF-8", http-equiv="Content-Type")
@@ -12,6 +12,6 @@ html(xmlns="http://www.w3.org/1999/xhtml")
       include includes/header
       #wrapper
         #content
-          != messages()
           != body
+          block main
         include includes/footer

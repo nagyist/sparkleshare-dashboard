@@ -1,9 +1,12 @@
-h1 #{__i('Delete User "%s"', u.login)}
+extends layout
 
-form(method="post", action=basepath + "/deleteUser/" + u.uid)
-  p
-    label #{__i('Name:')}
-    input(name="name", value=u.name, readonly=true)
-  p
-    input(type="submit", value=__i('Delete'))
-    input(type="hidden", name="login", value=u.login)
+block main
+  h1 #{__i('Delete User "%s"', u.login)}
+
+  form(method="post", action=basepath + "/deleteUser/" + u.uid)
+    p
+      label #{__i('Name:')}
+      input(name="name", value=u.name, readonly=true)
+    p
+      input(type="submit", value=__i('Delete'))
+      input(type="hidden", name="login", value=u.login)

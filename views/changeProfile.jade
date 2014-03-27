@@ -1,40 +1,19 @@
-h1 #{__i('Change profile')}
+extends layout
 
-form(method="post", action=basepath + "/changeProfile")
-  p
-    label #{__i('Name:')}
-    input(name="name", value=formval.name)
-  p
-    label #{__i('New password (leave empty for no change):')}
-    input(type="password", name="new1", id="newpass1")
-  p#newpass2block
-    label #{__i('Check new password:')}
-    input(type="password", name="new2", id="newpass2")
-  p
-    input(type="submit", value=__i('Change profile'))
+block main
+  h1 #{__i('Change profile')}
 
-script(type="text/javascript")
-  $(function() {
-    $("#newpass2block").hide();
-  });
+  form(method="post", action=basepath + "/changeProfile")
+    p
+      label #{__i('Name:')}
+      input(name="name", value=formval.name)
+    p
+      label #{__i('New password (leave empty for no change):')}
+      input(type="password", name="new1", id="newpass1")
+    p#newpass2block
+      label #{__i('Check new password:')}
+      input(type="password", name="new2", id="newpass2")
+    p
+      input(type="submit", value=__i('Change profile'))
 
-  function showHideNewPass2() {
-    var p1 = $("#newpass1").val();
-    if (p1.length) {
-      $("#newpass2block").show('fast');
-    } else {
-      $("#newpass2block").hide('fast');
-    }
-  }
-
-  $("#newpass1").blur(function() {
-    showHideNewPass2();
-  });
-
-  $("#newpass1").change(function() {
-    showHideNewPass2();
-  });
-
-  $("#newpass1").keydown(function() {
-    showHideNewPass2();
-  });
+  script(type="text/javascript" src="javascripts/changeProfile.js")

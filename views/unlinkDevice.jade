@@ -1,16 +1,19 @@
-h1 #{__i('Unlink device')} 
-  - if (d.name)
-    | "#{d.name}" (#{d.ident})
-  - else
-    | "#{d.ident}"
+extends layout
 
-form(method="post", action=basepath + "/unlinkDevice/" + d.id)
-  p
+block main
+  h1 #{__i('Unlink device')} 
     - if (d.name)
-      label #{__i('Name')}:
-      input(name="name", value=d.name, readonly=true)
+      | "#{d.name}" (#{d.ident})
     - else
-      label #{__i('Ident')}:
-      input(name="name-ident", value=d.ident, readonly=true)
-  p
-    input(type="submit", value=__i('Unlink'))
+      | "#{d.ident}"
+
+  form(method="post", action=basepath + "/unlinkDevice/" + d.id)
+    p
+      - if (d.name)
+        label #{__i('Name')}:
+        input(name="name", value=d.name, readonly=true)
+      - else
+        label #{__i('Ident')}:
+        input(name="name-ident", value=d.ident, readonly=true)
+    p
+      input(type="submit", value=__i('Unlink'))

@@ -1,22 +1,22 @@
-!bgcol= #EEEEEC
-!actlinkcol= #F57900
+$bgcol: #EEEEEC
+$actlinkcol: #F57900
 
 body
   :font-family "Quattrocento Sans", "Myriad Pro", sans-serif
   :font-size 14px
   :letter-spacing -0.1px
   :line-height 20px
-  :color !bgcol
+  :color $bgcol
   :background-color #222
 
 #outerwrapper
-  :background-color !bgcol
+  :background-color $bgcol
 
 #header
   :height 34px
   :padding 1em
   :background url("../images/sparkleshare-logo.png") no-repeat 1em center
-  :background-color !bgcol
+  :background-color $bgcol
 
   #toplinks
     :float right
@@ -45,19 +45,19 @@ body
   :text-align center
 
 #wrapper
-  =border-radius 7px 7px 0 0
-  =box-shadow 2px -4px 3px #bbb;
+  :border-radius 7px 7px 0 0
+  :box-shadow 2px -4px 3px #bbb
   :background-color #222
   :height 100%
 
 #content
   :padding 32px
   a:visited
-    :color !bgcol
+    :color $bgcol
   a
-    :color !bgcol
+    :color $bgcol
     &:hover
-      :color !actlinkcol
+      :color $actlinkcol
 
 .loginscreen
   :width 440px
@@ -71,7 +71,7 @@ body
     :background-image -webkit-gradient(linear, left top, left bottom, from(#bcbcbe), to(#ffffff))
     :background-image -moz-linear-gradient(top,  #bcbcbe,  #ffffff)
     :border 1px solid #717171
-    =border-radius 3px
+    :border-radius 3px
     label
       :position absolute
       :top 0
@@ -96,7 +96,7 @@ body
       :z-index 2
       :background transparent
       :border none
-      =border-radius 0
+      :border-radius 0
   input.login
     :width 80px
     :height 35px
@@ -122,7 +122,7 @@ a
   :font-weight bold
   :text-decoration none
   &:hover
-    :color !actlinkcol
+    :color $actlinkcol
 
 
 h1
@@ -140,13 +140,13 @@ input
   :width 200px
   :height 25px
   :padding 5px
-  :background-color !bgcol
+  :background-color $bgcol
 
   :font-weight bold
   :font-size 12px
 
   :border 1px solid #717171
-  =border-radius 3px
+  :border-radius 3px
   :text-shadow 0px 1px 0px #fff
   :outline none
   :background-image -webkit-gradient(linear, left top, left bottombottom, from(#bcbcbe), to(#ffffff))
@@ -187,7 +187,7 @@ ul.folder-links
 ul.tools
   :float right
   :border 1px solid #fff
-  =border-radius 5px
+  :border-radius 5px
   :padding 0.5em
   :list-style none
   li
