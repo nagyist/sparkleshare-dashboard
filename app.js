@@ -3,7 +3,6 @@
  */
 var express = require('express');
 var flash = require('connect-flash');
-var sass = require('node-sass');
 
 var querystring = require('querystring');
 var i18n = require("i18n");
@@ -64,11 +63,6 @@ app.configure(function(){
   app.use(express.methodOverride());
   app.use(express.cookieParser());
   app.use(flash());
-  app.use(require('sass-middleware')({     //does not do anything right now
-      src: __dirname + '/public/sass',
-      dest:  __dirname + '/public/',
-      debug: true
-  }));
   app.use(express.static(__dirname + '/public'));
   app.use(i18n.init);
   app.use(session);

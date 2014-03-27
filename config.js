@@ -4,7 +4,7 @@ exports.dazzle = {
   'home': '/home/storage',
   'user': 'storage',
   'group': 'storage',
-  'bin': '/usr/local/bin/dazzle.sh'
+  'bin': '/usr/bin/dazzle.sh'
 }
 
 exports.listen = {
