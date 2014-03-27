@@ -87,6 +87,7 @@ app.configure(function(){
     }
     res.locals.__i = i18n.__;
     res.locals.__n = i18n.__n;
+    res.locals.flash = req.flash;
     next();
   });
   app.use(app.router);
@@ -105,12 +106,12 @@ var middleware = require('./middleware');
 middleware.setup(userProvider, deviceProvider, folderProvider, linkCodeProvider);
 
 app.configure('development', function(){
-  app.use(express.errorHandler({ dumpExceptions: true, showStack: true })); 
+  app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
 });
 
 app.configure('production', function(){
   app.use(errors.errorHandler);
-  app.use(express.errorHandler()); 
+  app.use(express.errorHandler());
 });
 
 function auth(login, pass, next) {
@@ -388,7 +389,7 @@ app.get('/recentchanges/:folderName?', middleware.isLogged, middleware.checkFold
     if (error) { return next(error); }
     folder.getRecentChanges(req, function(error, data) {
       if (error) { return next(error); }
- 
+
       res.render('recentchanges', {
         data: data,
         folder: folder

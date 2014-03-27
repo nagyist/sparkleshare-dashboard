@@ -1,6 +1,5 @@
 exports.sessionSecret = 'JustSomeRandomString';
 
-
 exports.dazzle = {
   'home': '/home/storage',
   'user': 'storage',

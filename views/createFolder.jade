@@ -1,11 +1,14 @@
-h1 #{__i('Add Folder')}
+extends layout
 
-form(method="post", action=basepath + "/createFolder")
-  p
-    label #{__i('Name:')}
-    input(name="foldername", value=formval.foldername)
-  p
-    label #{__i('Public:')}
-    input(type="checkbox", name="pub", value="t", checked=formval.pub)
-  p
-    input(type="submit", value=__i('Add Folder'))
+block main
+  h1 #{__i('Add Folder')}
+
+  form(method="post", action=basepath + "/createFolder")
+    p
+      label #{__i('Name:')}
+      input(name="foldername", value=formval.foldername)
+    p
+      label #{__i('Public:')}
+      input(type="checkbox", name="pub", value="t", checked=formval.pub)
+    p
+      input(type="submit", value=__i('Add Folder'))
