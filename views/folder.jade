@@ -4,13 +4,14 @@ block main
   h1 #{__i('Folder %s', folder.name)}
 
   include includes/toolbox
+
   ul.folder-links
     li
       a(href=basepath + "/folder") #{__i('Back to folder list')}
     li
-      a(href=basepath + "/recentchanges/" + folder.name) #{__i('Recent changes')}
+      a(href=basepath + "/recentchanges/" + folder.id) #{__i('Recent changes')}
     li
-      a(href=basepath + "/download/" + folder.name + '?path=' + path) #{__i('Download folder contents')}
+      a(href=basepath + "/download/" + folder.id + '?path=' + path) #{__i('Download folder contents')}
 
   p.path
     strong [#{folder.name}]/#{path}
@@ -18,14 +19,14 @@ block main
   ul.folders
     - if (locals.parUrl)
       li.parent
-        a(href=basepath + "/folder/" + folder.name + '?type=dir&' + parUrl) ..
+        a(href=basepath + "/folder/" + folder.id + '?type=dir&' + parUrl) ..
 
     - each entry in tree
       li(class=[entry.type, "mime-" + entry.mimeBase, "mime-" + entry.mime.replace("/", "-")])
         - if (entry.type == 'file')
-          a(href=basepath + "/folder/" + folder.name + '?type=file&' + entry.url)= entry.name
+          a(href=basepath + "/folder/" + folder.id + '?type=file&' + entry.url)= entry.name
           = " (" + convertSize(entry.fileSize) + ")"
           - if (folder.pub)
-            a(href=basepath + "/publicFolder/" + folder.name + '?' + entry.directUrl) (#{__i('Public Link')})
+            a(href=basepath + "/publicFolder/" + folder.id + '?' + entry.directUrl) (#{__i('Public Link')})
         - else
-          a(href=basepath + "/folder/" + folder.name + '?type=dir&' + entry.url)= entry.name + '/'
+          a(href=basepath + "/folder/" + folder.id + '?type=dir&' + entry.url)= entry.name + '/'

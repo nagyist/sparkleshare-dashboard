@@ -3,6 +3,7 @@
  */
 var express = require('express');
 var flash = require('connect-flash');
+var sass = require('node-sass');
 
 var querystring = require('querystring');
 var i18n = require("i18n");
@@ -13,7 +14,6 @@ var utils = require('./utils');
 
 var RedisStore = require('connect-redis')(express);
 var redis = require('redis'), redisClient = redis.createClient();
-var session = express.session({ secret: config.sessionSecret, store: new RedisStore() });
 
 var app = null;
 if (config.https.enabled) {
@@ -38,6 +38,8 @@ if (config.https.enabled) {
   });
 }
 
+var session = express.session({ secret: config.sessionSecret, store: new RedisStore() });
+
 i18n.configure({
     locales: ['en', 'cs', 'de', 'el']
 });
@@ -58,11 +60,15 @@ app.configure(function(){
     }
     next();
   });
-  app.use(express.urlencoded());
-  app.use(express.json());
+  app.use(express.bodyParser());
   app.use(express.methodOverride());
   app.use(express.cookieParser());
   app.use(flash());
+  app.use(require('sass-middleware')({
+      src: __dirname + '/public/sass',
+      dest:  __dirname + '/public/',
+      debug: true
+  }));
   app.use(express.static(__dirname + '/public'));
   app.use(i18n.init);
   app.use(session);
@@ -81,14 +87,13 @@ app.configure(function(){
     }
     res.locals.__i = i18n.__;
     res.locals.__n = i18n.__n;
-    res.locals.flash = req.flash;
     next();
   });
   app.use(app.router);
 });
 
 var FolderProvider = require('./folderProvider').FolderProvider;
-var folderProvider = new FolderProvider(redisClient);
+var folderProvider = new FolderProvider(config.folders);
 var DeviceProvider = require('./deviceProvider').DeviceProvider;
 var deviceProvider = new DeviceProvider(redisClient);
 var UserProvider = require('./userProvider').UserProvider;
@@ -100,12 +105,12 @@ var middleware = require('./middleware');
 middleware.setup(userProvider, deviceProvider, folderProvider, linkCodeProvider);
 
 app.configure('development', function(){
-  app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
+  app.use(express.errorHandler({ dumpExceptions: true, showStack: true })); 
 });
 
 app.configure('production', function(){
   app.use(errors.errorHandler);
-  app.use(express.errorHandler());
+  app.use(express.errorHandler()); 
 });
 
 function auth(login, pass, next) {
@@ -332,29 +337,8 @@ app.post('/createUser', [middleware.isLogged, middleware.isAdmin], function(req,
   });
 });
 
-app.get('/createFolder', [middleware.isLogged, middleware.isAdmin], function(req, res) {
-  res.render('createFolder', { formval: {} });
-});
-
-app.post('/createFolder', [middleware.isLogged, middleware.isAdmin], function(req, res) {
-  var reRenderForm = function() {
-    res.render('createFolder', {
-      formval: req.body
-    });
-  };
-  folderProvider.createNew(req.body.foldername, req.body.pub == 't', function(error, folder) {
-    if (error) {
-      req.flash('error', error);
-      reRenderForm();
-    } else {
-      req.flash('info', i18n.__('Folder created'));
-      res.redirect('/folder');
-    }
-  });
-});
-
-app.get('/publicFolder/:folderName', function(req, res, next) {
-  folderProvider.findByName(req.params.folderName, function(error, folder) {
+app.get('/publicFolder/:folderId', function(req, res, next) {
+  folderProvider.findById(req.params.folderId, function(error, folder) {
     if (!folder.pub) {
       next(new errors.Permission('This is not a public folder'));
     } else {
@@ -378,12 +362,12 @@ app.get('/publicFolder/:folderName', function(req, res, next) {
   });
 });
 
-app.get('/recentchanges/:folderName?', middleware.isLogged, middleware.checkFolderAcl, function(req, res, next) {
-  folderProvider.findByName(req.params.folderName, function(error, folder) {
+app.get('/recentchanges/:folderId?', middleware.isLogged, middleware.checkFolderAcl, function(req, res, next) {
+  folderProvider.findById(req.params.folderId, function(error, folder) {
     if (error) { return next(error); }
     folder.getRecentChanges(req, function(error, data) {
       if (error) { return next(error); }
-
+ 
       res.render('recentchanges', {
         data: data,
         folder: folder
@@ -392,8 +376,8 @@ app.get('/recentchanges/:folderName?', middleware.isLogged, middleware.checkFold
   });
 });
 
-app.get('/folder/:folderName?', middleware.isLogged, middleware.checkFolderAcl, function(req, res, next) {
-  if (!req.params.folderName) {
+app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, function(req, res, next) {
+  if (!req.params.folderId) {
     folderProvider.findAll(function(error, folders){
       if (error) { return next(error); }
 
@@ -404,7 +388,7 @@ app.get('/folder/:folderName?', middleware.isLogged, middleware.checkFolderAcl, 
       });
     });
   } else {
-    folderProvider.findByName(req.params.folderName, function(error, folder) {
+    folderProvider.findById(req.params.folderId, function(error, folder) {
       if (error) { return next(error); }
 
       if (req.param('type') == 'file') {
@@ -452,8 +436,8 @@ app.get('/folder/:folderName?', middleware.isLogged, middleware.checkFolderAcl, 
   }
 });
 
-app.get('/download/:folderName', middleware.isLogged, middleware.checkFolderAcl, function(req, res, next) {
-  folderProvider.findByName(req.params.folderName, function(error, folder) {
+app.get('/download/:folderId', middleware.isLogged, middleware.checkFolderAcl, function(req, res, next) {
+  folderProvider.findById(req.params.folderId, function(error, folder) {
     if (error) { return next(error); }
     var headersSent = false;
     var maybeSentHeaders = function() {
@@ -466,7 +450,7 @@ app.get('/download/:folderName', middleware.isLogged, middleware.checkFolderAcl,
       if (path && path != '') {
         filename += '-' + path.replace(/[^\w\d-]/, '_');
       }
-      filename += '-' + req.params.folderName + '.zip';
+      filename += '-' + req.params.folderId.substring(0, 8) + '.zip';
       res.writeHead(200, {
         'Content-Type': 'application/zip',
         'Content-Disposition': 'attachment; filename="' + filename + '"'
@@ -524,10 +508,7 @@ app.get('/linkedDevices', middleware.isLogged, function(req, res, next) {
 
 app.get('/linkDevice', middleware.isLogged, function(req, res) {
   var schema = config.https.enabled ? 'https' : 'http';
-  var url = schema + '://' + req.host
-  if (config.listen.port != 80) {
-    url += ":" + config.listen.port;
-  }
+  var url = schema + '://' + req.header('host');
 
   if (config.externalUrl) {
     url = config.externalUrl;

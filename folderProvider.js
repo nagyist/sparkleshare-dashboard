@@ -1,59 +1,46 @@
 var error = require('./error');
 var Backend = require('./backend/backend').Backend;
 
+FolderProvider = function(folders){
+  var onGotId = function (error, id, forBackend) {
+    if (!error && id) {
+      f[id] = forBackend;
+    } else {
+      console.log('could not add folder; no id returned: ' + error);
+    }
+  };
 
-FolderProvider = function(redisClient) {
-  this.rclient = redisClient;
+  for (var i = 0; i < folders.length; i++) {
+    var backend = new Backend(folders[i]);
+    var f = this.folders;
+    backend.getId(onGotId, backend);
+  }
 };
-
 
 FolderProvider.prototype.folders = {};
 
 FolderProvider.prototype.findAll = function(next) {
-
-  var provider = this;
-  provider.rclient.smembers("folderNames", function(error, uids)  {
-    if (error) { return next(error); }
-    var r = [];
-    var count = uids.length;
-    if (count === 0) {
-      next (null, r);
+  var f = {};
+  for (var id in this.folders) {
+    if (this.folders.hasOwnProperty(id)) {
+      f[id] = this.folders[id];
     }
-    uids.forEach(function(uid) {
-      provider.findByName(uid, function(error, folder) {
-        if (error) { return next(error); }
-        r.push(folder);
-        if (--count === 0) {
-          next(null, r);
-        }
-      });
-    });
-  });
+  }
+  next(null, f);
 };
 
-FolderProvider.prototype.findByName = function(name, next) {
-  this.rclient.get("folderName:" + name + ":folder", function(error, data) {
-    if (error) { return next(error); }
-    if (!data) { return next(); }
-    next(null, new Backend(null,JSON.parse(data)));
-  });
+FolderProvider.prototype.findById = function(id, next) {
+  var result = null;
+
+  if (id in this.folders) {
+    result = this.folders[id];
+  }
+
+  if (!result) {
+    next(new error.NotFound('No such folder'));
+  } else {
+    next(null, result);
+  }
 };
-
-FolderProvider.prototype.createNew = function(name,pub,next) {
-
-  var provider = this;
-  var newFolder = new Backend(name);
-  newFolder.create(function(error) {
-    if (!error) {
-      newFolder.pub = pub;
-      provider.rclient.set("folderName:" + name + ":folder", JSON.stringify(newFolder));
-      provider.rclient.sadd("folderNames", name);
-      next(null, newFolder);
-    } else {
-      next(new Error('Creation of Folder failed. Foldername already in use?'));
-    }
-  });
-};
-
 
 exports.FolderProvider = FolderProvider;
