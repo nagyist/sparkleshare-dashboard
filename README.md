@@ -1,3 +1,11 @@
+This is another fork of a fork of Sparkleshare-Dashboard.
+Especially, this version will run on recent versions of nodejs (>= 0.10) and express (3) as it was
+impossible for me to run other versions.
+
+The following are the previous contents of the README.md file.
+
+----
+
 This is a fork of the NodeJS-driven Dashboard of the free Dropbox
 alternative SparkleShare. The original repository was removed from
 github from the author because of the "lack of interest" of the
