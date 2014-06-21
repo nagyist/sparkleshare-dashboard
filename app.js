@@ -60,6 +60,7 @@ app.configure(function(){
   });
   app.use(express.urlencoded());
   app.use(express.json());
+  //app.use(express.multipart());
   app.use(express.methodOverride());
   app.use(express.cookieParser());
   app.use(flash());

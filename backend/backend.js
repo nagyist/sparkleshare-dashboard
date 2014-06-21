@@ -53,6 +53,10 @@ Backend.prototype = {
     } else {
       next(null, this.id, forBackend);
     }
+  },
+
+  putFile: function(req, data, next) {
+      this.backend.putFile(req, data, next);
   }
 };
 

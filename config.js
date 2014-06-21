@@ -1,8 +1,8 @@
 exports.sessionSecret = 'JustSomeRandomString';
 
 exports.folders = [
-  { type: 'git', name: 'Public GIT folder', path: '/home/nexus/Desktop/play/SparkleDashboard-x/repos/g1', pub: true },
-  { type: 'git', name: 'Private GIT folder', path: '/home/nexus/Desktop/play/SparkleDashboard-x/repos/g2', pub: false }
+  { type: 'git', name: 'Public GIT folder', path: '/mnt/data/repos/repo1', pub: true },
+  { type: 'git', name: 'Private GIT folder', path: '/mnt/data/repos/repo2', pub: false }
 ];
 
 exports.listen = {
@@ -33,6 +33,7 @@ exports.fanout = {
 
 exports.backend = {
   'git': {
-    'bin': 'git'
+    'bin': 'git',               //the git executable
+    'temp': '/mnt/data/temp'    //directory used for local checkouts (should exist)
   }
 };

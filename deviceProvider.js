@@ -15,7 +15,7 @@ DeviceProvider.prototype = {
 
       newDevice.name = reqName;
       newDevice.ownerUid = uid;
-      
+
       provider.rclient.incr('seq:nextDeviceId', function(error, nid) {
         if (error) { return next(error); }
         newDevice.id = nid;

@@ -1,3 +1,5 @@
+/* vim: set tabstop=2 shiftwidth=2 expandtab: */
+
 var config = require('../config');
 
 GitBackend = function (path) {
@@ -7,6 +9,9 @@ GitBackend = function (path) {
 var spawn = require('child_process').spawn;
 var querystring = require('querystring');
 var mime = require('mime');
+var fs = require('fs');
+var pathlib = require('path');
+var async = require('async');
 
 function parseList(list, curPath, next) {
   var r = list.split(/\0/);
@@ -83,11 +88,11 @@ function parseGitLog(data) {
     var logEntry = entries[i];
     var isMergeCommit = false;
     var regex;
-    
+
     if (logEntry.indexOf("\nMerge: ") != -1) {
       regex = mergeRegex;
       isMergeCommit = true;
-    } 
+    }
     else {
       regex = nonMergeRegex;
     }
@@ -134,7 +139,7 @@ function parseGitLog(data) {
             var tabPos = entryLine.lastIndexOf("\t");
             filePath = entryLines[elIndex + 1];
             toFilePath = entryLines[elIndex + 2];
-  
+
             renamedObj.from = filePath;
             renamedObj.to = toFilePath;
 
@@ -142,10 +147,10 @@ function parseGitLog(data) {
           }
         }
       }
-      
-      if ((changeSetEntry.added.length 
-           + changeSetEntry.edited.length 
-           + changeSetEntry.deleted.length 
+
+      if ((changeSetEntry.added.length
+           + changeSetEntry.edited.length
+           + changeSetEntry.deleted.length
            + changeSetEntry.renamed.length) > 0) {
           changeSet[changeSetIndex++] = changeSetEntry;
       }
@@ -157,19 +162,39 @@ function parseGitLog(data) {
 
 GitBackend.prototype = {
   execGit: function(params, ondata, next) {
+    //overload as execGit(params, next)
     if (typeof(next) == "undefined") {
       next = ondata;
       ondata = null;
     }
-    // needed for older git versions
+
+    //continue after git command has exited and do not care for output
+    //(fixing problems with below logic when commands do not return anything)
+    var ignore_output
+    var ign_idx = params.indexOf("ignore_output")
+    if (ign_idx != -1) {
+      ignore_output = true
+      params.splice(ign_idx, 1)
+    } else {
+      ignore_output = false
+    }
+
+    var ignore_return_code
+    ign_idx = params.indexOf("ignore_return_code")
+    if (ign_idx != -1) {
+      ignore_return_code = true
+      params.splice(ign_idx, 1)
+    } else {
+      ignore_return_code = false
+    }
+
+    //add path parameter, needed for older git versions
     params.unshift('--git-dir='+this.path);
+
+    //call git with all the given parameters
     var g = spawn(config.backend.git.bin, params, { encoding: 'binary', env: {
       GIT_DIR: this.path
     }});
-
-    g.stderr.on('data', function(data) {
-       console.log('stderr: ' + data);
-    });
 
     // under some very weird circumstances the 'exit'
     // event may arise _before_ the 'data' event is triggered
@@ -180,7 +205,8 @@ GitBackend.prototype = {
     // totally wrong if some exec call does not write anything
     // to stdout and therefor never triggers the 'data' event ...
     var finalize = function() {
-      if (exitCode) {
+    //handle data and exit events and call handler function that was passed
+      if (exitCode && !ignore_return_code) {
         return next(new Error('GIT failed'));
       } else {
         return next(null, out);
@@ -198,18 +224,29 @@ GitBackend.prototype = {
          if (typeof(out) == 'undefined') {
             out = '';
          }
-	       out += data.toString('utf8');
+         out += data.toString('utf8');
          if (typeof(exitCode) != "undefined") {
             finalize();
-	       }
+         }
       });
     }
 
+    g.stderr.on('data', function(data) {
+       //console.log('git stderr: ' + data);
+       //in case there is stderr output, also allow finalizing on exit for calls that
+       //don't return data (not a proper solution really)
+       if (typeof(out) == 'undefined') {
+          out = "git: " + data;
+       }
+       if (typeof(exitCode) != "undefined") {
+            finalize();
+       }
+    });
+
     g.on('exit', function(code) {
       exitCode = code;
-      if (typeof(out) != "undefined") {
-         finalize();
-      }
+      if(typeof(out) != "undefined" || ignore_output)
+        finalize();
     });
   },
 
@@ -315,6 +352,132 @@ GitBackend.prototype = {
     this.getItems(req, function(error, items) {
       next(null, items.length);
     });
+  },
+
+  //overwrite an existing file
+  putFile: function(req, data, next) {
+    var baseHash = req.param('hash');
+    var path = req.param('path');
+    if (!path) {
+      next(new Error('No file path given'));
+    }
+
+    var temp_dir = config.backend.git.temp
+    var wc_dir = pathlib.join(temp_dir, pathlib.basename(this.path))
+
+    fsErrorHandler = function(err){
+      if(err) {
+        console.log(err);
+      }
+    };
+
+    //create temp dir (what if it exists already, do we have permissions to create it? leave to the
+    //user for now)
+    //check if exists: fs.stat, better way to do: try to create and if it fails (dir or file with
+    //that name exists), check with stat if it is a directory. if not fail and stop with proper message
+    //fs.mkdir(temp_dir, 0755, fsErrorHandler);
+
+    var parent = this
+
+    async.series([
+      function(callback){
+        //clone repo to get a working copy (files are hard linked)
+        parent.execGit(['clone', '-n', parent.path, wc_dir], function(error, data){
+          if (error != null) { return next(error); }
+          callback(null)
+        });
+      },
+
+      function(callback){
+        //change current directory to new working copy
+        parent.old_this_path = parent.path
+        parent.path = pathlib.join(wc_dir, '.git')
+        callback(null)
+      },
+
+      //set username and email for new working copy
+      function(callback){
+        console.log("Set user.name")
+        parent.execGit(['config', 'user.name', req.currentUser.name, 'ignore_output'],
+          function(error, data){
+            if (error) { return next(error); }
+            callback(null)
+        });
+      },
+
+      function(callback){
+        //TODO: add email field to UserProvider
+        console.log("Set user.email")
+        parent.execGit(['config', 'user.email', req.currentUser.login+'@'+req.currentUser.deviceName,
+          'ignore_output'], function(error, data){
+            if (error) { return next(error); }
+            callback(null)
+        });
+      },
+      function(callback){
+        //save data into the file given by path
+        fs.writeFile(pathlib.join(wc_dir, path), data, function(error){
+          if(error) { return next(error); }
+          callback(null)
+        });
+      },
+      function(callback){
+        //add the new file
+        console.log("Add new file")
+        parent.execGit(['--work-tree=' + wc_dir, 'add', pathlib.join(wc_dir, path), 'ignore_output'],
+          function(error, data){
+            if (error) { return next(error); }
+            callback(null)
+        });
+      },
+
+      function(callback){ 
+        console.log("Commit new file")
+
+        //commit only this new file
+        parent.execGit(['--work-tree=' + wc_dir, 'commit', pathlib.join(wc_dir, path), '-m',
+          '/ ‘' + path + '‘', "ignore_return_code"], function(error, data){
+            if (error) { return next(error); }
+            callback(null)
+        });
+      },
+
+      function(callback){
+        //push the commit
+        console.log("Push commit")
+
+        //commit only this new file
+        parent.execGit(['--work-tree=' + wc_dir, 'push'],
+          function(error, data){
+            if (error) { return next(error); }
+            callback(null)
+        });
+      },
+      function(callback){
+        //delete working copy again
+        deleteFolderRecursive = function(path) {
+          var files = [];
+          if( fs.existsSync(path) ) {
+            files = fs.readdirSync(path);
+            files.forEach(function(file,index){
+                var curPath = pathlib.join(path, file);
+                if(fs.lstatSync(curPath).isDirectory()) { // recurse
+                    deleteFolderRecursive(curPath);
+                } else { // delete file
+                    fs.unlinkSync(curPath);
+                }
+            });
+            fs.rmdirSync(path);
+          }
+        };
+        deleteFolderRecursive(wc_dir);
+        callback(null)
+      },
+      function(callback){
+        parent.path = parent.old_this_path
+        callback(null)
+      }
+    ]);
   }
 };
 
