@@ -159,10 +159,13 @@ ul.folders
     :line-height 32px
     &.git
       :background url('../images/folder-git.png') no-repeat left center
+      :background-size contain
     &.dir
       :background url('../images/folder.png') no-repeat left center
+      :background-size contain
     &.file
       :background url('../images/file.png') no-repeat left center
+      :background-size 32px
     a
       :padding 0.2em 0.5em
       &:hover
@@ -195,10 +198,15 @@ ul.tools
     :line-height 20px
   .link
     :background url('../images/phone.png') no-repeat left center
+    :background-size contain
   .chpass
     :background url('../images/key.png') no-repeat left center
+    :background-size contain
   .mngusers
     :background url('../images/users.png') no-repeat left center
+    :background-size contain
+  a
+    :padding-left 10px
 
 #qrpart
   :margin-top 1em
