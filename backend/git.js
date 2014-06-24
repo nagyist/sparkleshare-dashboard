@@ -455,6 +455,7 @@ GitBackend.prototype = {
       },
       function(callback){
         //delete working copy again
+        console.log("Delete working copy")
         deleteFolderRecursive = function(path) {
           var files = [];
           if( fs.existsSync(path) ) {
@@ -474,8 +475,10 @@ GitBackend.prototype = {
         callback(null)
       },
       function(callback){
+        console.log("finished editing file")	
         parent.path = parent.old_this_path
         callback(null)
+        next(null, "Ok.")
       }
     ]);
   }

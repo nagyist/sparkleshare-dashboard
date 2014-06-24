@@ -71,6 +71,7 @@ Api = function(app, dp, fp, mw) {
       function(error, data) {
         if (error) { return next(error); }
         res.write(data);
+        res.end();
       });
   });
 
