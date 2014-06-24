@@ -475,7 +475,7 @@ GitBackend.prototype = {
         callback(null)
       },
       function(callback){
-        console.log("finished editing file")	
+        console.log("finished editing file")
         parent.path = parent.old_this_path
         callback(null)
         next(null, "Ok.")
