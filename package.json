@@ -12,6 +12,7 @@
     , "redis": "=0.10.x"
     , "i18n": ">=0.4.x"
     , "async": "=0.9"
+    , "node-sass": ">=0.9.3"
   }
   , "scripts": {
     "start": "node ./app.js"

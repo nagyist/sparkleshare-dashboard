@@ -10,10 +10,13 @@ var i18n = require("i18n");
 var config = require('./config');
 var errors = require('./error');
 var utils = require('./utils');
+var path = require('path');
 
 var RedisStore = require('connect-redis')(express);
 var redis = require('redis'), redisClient = redis.createClient();
 var session = express.session({ secret: config.sessionSecret, store: new RedisStore() });
+
+var sass = require('node-sass')
 
 var app = null;
 if (config.https.enabled) {
@@ -67,6 +70,12 @@ app.configure(function(){
   app.use(express.static(__dirname + '/public'));
   app.use(i18n.init);
   app.use(session);
+  app.use(sass.middleware({
+    src: __dirname, 
+    dest: path.join(__dirname, 'public'),
+    debug: false
+  }))
+
 
   app.use(function(req, res, next){
     res.locals.session = req.session;
