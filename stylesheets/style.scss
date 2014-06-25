@@ -2,7 +2,7 @@ $bgcol: #eeeeec;
 $actlinkcol: #f57900;
 
 body {
-  font-family: "Quattrocento Sans", "Myriad Pro", sans-serif;
+  font-family: "Quattrocento Sans", "Myriad Pro", "Helvetica", sans-serif;
   font-size: 14px;
   letter-spacing: -0.1px;
   line-height: 20px;
@@ -21,7 +21,7 @@ body {
   background-color: $bgcol;
   #toplinks {
     float: right;
-    margin-top: 8px;
+    margin-top: -10px;
     font-size: 16px;
     font-weight: bold;
     color: #555753;
@@ -59,7 +59,7 @@ body {
 }
 
 #content {
-  padding: 32px;
+  padding: 25px;
   a:visited {
     color: $bgcol;
   }
@@ -177,17 +177,19 @@ input {
 }
 
 ul.folders {
+  clear: both;
+  float: left;
   list-style: none;
   li {
     padding-left: 42px;
-    line-height: 32px;
+    line-height: 48px;
     &.git {
       background: url("../images/folder-git.png") no-repeat left center;
-      background-size: contain;
+      background-size: 32px;
     }
     &.dir {
       background: url("../images/folder.png") no-repeat left center;
-      background-size: contain;
+      background-size: 32px;
     }
     &.file {
       background: url("../images/file.png") no-repeat left center;
@@ -208,15 +210,28 @@ ul.folders {
   margin-top: 2em;
 }
 
+div.heading {
+  float: left;
+  width: 100%
+}
+
+.heading h1 {
+  float:left;
+}
+
 ul.folder-links {
-  font-size: 12px;
-  line-height: 12px;
-  margin-bottom: 1em;
+  font-size: 14px;
+  line-height: 14px;
+  margin-bottom: 1.5em;
   list-style-type: none;
   padding: 0;
+  clear: both;
+  float: left;
+  margin-top: 10px;
   li {
     display: inline-block;
     padding: 0 10px;
+    margin-bottom: 10px;
     border-left: 12px solid white;
   }
 }
@@ -295,13 +310,13 @@ table {
 }
 
 ul.changesets {
-  width: 80%;
+  margin-top: 50px;
 }
 
 li.changeset {
   border: 1px solid #eeeeec;
   padding: 5px;
-  margin: 8px;
+  margin-bottom: 6px;
 }
 
 ul.change {

@@ -1,18 +1,19 @@
 extends layout
 
 block main
-  h1 #{__i('Folder %s', folder.name)}
+  div(class="heading")
+    h1 #{__i('Folder %s', folder.name)}
 
-  include includes/toolbox
+    include includes/toolbox
 
-  ul.folder-links
-    li
-      a(href=basepath + "/folder") #{__i('Back to folder list')}
-    li
-      a(href=basepath + "/recentchanges/" + folder.id) #{__i('Recent changes')}
-    li
-      a(href=basepath + "/download/" + folder.id + '?path=' + path) #{__i('Download folder contents')}
-
+    ul.folder-links
+      li
+        a(href=basepath + "/folder") #{__i('Back to folder list')}
+      li
+        a(href=basepath + "/recentchanges/" + folder.id) #{__i('Recent changes')}
+      li
+        a(href=basepath + "/download/" + folder.id + '?path=' + path) #{__i('Download folder contents')}
+  
   p.path
     strong [#{folder.name}]/#{path}
 
