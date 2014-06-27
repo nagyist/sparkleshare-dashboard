@@ -78,14 +78,14 @@ app.use(bodyParser.json());
 app.use(methodOverride());
 app.use(cookieParser());
 app.use(flash());
+app.use(sass.middleware({
+    src: __dirname,
+    dest: path.join(__dirname, 'public'),
+    debug: false
+}));
 app.use(express.static(__dirname + '/public'));
 app.use(i18n.init);
 app.use(session);
-app.use(sass.middleware({
-    src: __dirname, 
-    dest: path.join(__dirname, 'public'),
-    debug: false
-  }));
 
 app.use(function (req, res, next) {
   res.locals.session = req.session;
@@ -413,6 +413,7 @@ app.get('/recentchanges/:folderId?', middleware.isLogged, middleware.checkFolder
 
 app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, function (req, res, next) {
   if (!req.params.folderId) {
+    //show folder list
     folderProvider.findAll(function (error, folders) {
       if (error) {
         return next(error);
@@ -425,18 +426,51 @@ app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, fu
       });
     });
   } else {
+    //show specified folderId
     folderProvider.findById(req.params.folderId, function (error, folder) {
       if (error) {
         return next(error);
       }
 
       if (req.param('type') == 'file') {
+        //show one file
         var filename = req.param('name');
         if (!filename) {
           filename = 'file';
         }
+
+        //set Content-Disposition so file is downloaded (Content-Type will be set by .ext)
         res.attachment(filename);
 
+        var text_types = [
+            'text/',
+            'application/x-tex',
+            'application/x-sh',
+            'application/x-javascript',
+            'application/xhtml+xml',
+            'application/xml'
+        ]
+
+        var view_types = [
+            'image/',
+            'application/pdf',
+        ]
+
+        text_types.forEach(function(t){
+            if(res.get('Content-Type').search(t) != -1 ){
+                //display directly if text type
+                res.set('Content-Disposition', '')
+                res.set('Content-Type', 'text/plain')
+            }
+        });
+
+        view_types.forEach(function(t){
+            if(res.get('Content-Type').search(t) != -1 ){
+                res.set('Content-Disposition', '')
+            }
+        });
+
+        //download file
         folder.getRawData(req,
           function (error, data) {
             if (error) {
@@ -452,6 +486,7 @@ app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, fu
           }
         );
       } else {
+        //show folder contents
         folder.getItems(req, function (error, list) {
           if (error) {
             return next(error);

@@ -2,12 +2,13 @@ $bgcol: #eeeeec;
 $actlinkcol: #f57900;
 
 body {
-  font-family: "Quattrocento Sans", "Myriad Pro", "Helvetica", sans-serif;
+  font-family: "Trebuchet MS", Helvetica, sans-serif;
   font-size: 14px;
   letter-spacing: -0.1px;
   line-height: 20px;
   color: $bgcol;
   background-color: #222222;
+  font-weight: lighter;
 }
 
 #outerwrapper {
@@ -141,7 +142,7 @@ a, a:visited {
 }
 
 a {
-  font-weight: bold;
+  font-weight: bolder;
   text-decoration: none;
   &:hover {
     color: $actlinkcol;
