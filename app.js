@@ -2,8 +2,9 @@
  * Module dependencies.
  */
 var express = require('express');
-var session = require('express-session')
+var session = require('express-session');
 var flash = require('connect-flash');
+var logger = require('morgan');
 
 var querystring = require('querystring');
 var i18n = require("i18n");
@@ -54,7 +55,7 @@ i18n.configure({
 // Configuration
 var lf = utils.getLoggingFormat();
 if (lf) {
-  app.use(express.logger(lf));
+  app.use(logger(lf));
 }
 app.set('views', __dirname + '/views');
 app.set('view engine', 'jade');
