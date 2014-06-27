@@ -472,6 +472,10 @@ app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, fu
             }
         });
 
+        if(req.param('download') == 'force'){
+          is_editable = false
+        }
+
         //download file
         folder.getRawData(req,
           function (error, data) {
@@ -484,7 +488,8 @@ app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, fu
                 'file': filename,   //this file
                 'path': curPath,    //repo path to file parent
                 'parent': folder,   //parent directory id
-                'data': data
+                'data': data,
+                'filehash': req.param('hash')
               })
               return
             } else {

@@ -13,7 +13,8 @@ block main
         - else
           a(href=basepath + "/folder/" + parent.id + '?type=dir') #{__i('Back to folder')}
       li
-        a(href=basepath + "/folder/" + parent.id + '?type=file&download=force&name='+ file) #{__i('Download file')}
+        a(href=basepath + "/folder/" + parent.id + '?type=file&download=force&name='+ file +
+                '&hash=' + filehash) #{__i('Download file')}
 
     form(action=basepath + '/editFile/'+parent.id+'?path='+file, method='post')
         textarea(name='content').edit-box !{data}
