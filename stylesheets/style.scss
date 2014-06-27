@@ -237,6 +237,21 @@ ul.folder-links {
   }
 }
 
+textarea.edit-box {
+  float: left;
+  clear: both;
+  margin-left: 10px;
+  width: 90%;
+  height: 450px;
+}
+
+input.edit-save {
+  float: left;
+  clear: both;
+  margin-left: 10px;
+  margin-top: 10px;
+}
+
 ul.tools {
   float: right;
   border: 1px solid white;

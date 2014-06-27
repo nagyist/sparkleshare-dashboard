@@ -1,0 +1,21 @@
+extends layout
+
+block main
+  div(class="heading")
+    h1 #{__i('Preview of %s', file)}
+
+    include includes/toolbox
+
+    ul.folder-links
+      li
+        - if (parent.pub)
+          a(href=basepath + "/publicFolder/" + parent.id) (#{__i('Back to folder')})
+        - else
+          a(href=basepath + "/folder/" + parent.id + '?type=dir') #{__i('Back to folder')}
+      li
+        a(href=basepath + "/folder/" + parent.id + '?type=file&download=force&name='+ file) #{__i('Download file')}
+
+    form(action=basepath + '/editFile/'+parent.id+'?path='+file, method='post')
+        textarea(name='content').edit-box !{data}
+        input(type='submit', value=__i('Save file')).edit-save
+

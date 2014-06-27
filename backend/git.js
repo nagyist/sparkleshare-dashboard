@@ -356,7 +356,6 @@ GitBackend.prototype = {
 
   //overwrite an existing file
   putFile: function(req, data, next) {
-    var baseHash = req.param('hash');
     var path = req.param('path');
     if (!path) {
       next(new Error('No file path given'));
@@ -431,7 +430,7 @@ GitBackend.prototype = {
         });
       },
 
-      function(callback){ 
+      function(callback){
         console.log("Commit new file")
 
         //commit only this new file

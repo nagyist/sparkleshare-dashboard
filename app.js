@@ -1,3 +1,5 @@
+/* vim: set tabstop=2 shiftwidth=2 expandtab: */
+
 /**
  * Module dependencies.
  */
@@ -364,6 +366,7 @@ app.post('/createUser', [middleware.isLogged, middleware.isAdmin], function (req
   });
 });
 
+//TODO: put logic that is shared between publicFolder and folder into helper func
 app.get('/publicFolder/:folderId', function (req, res, next) {
   folderProvider.findById(req.params.folderId, function (error, folder) {
     if (!folder.pub) {
@@ -393,6 +396,152 @@ app.get('/publicFolder/:folderId', function (req, res, next) {
   });
 });
 
+app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, function (req, res, next) {
+  if (!req.params.folderId) {
+    folderProvider.findAll(function (error, folders) {
+      if (error) {
+        return next(error);
+      }
+
+      utils.aclFilterFolderList(folders, req.currentUser);
+
+      //show repo list
+      res.render('folders', {
+        folders: folders
+      });
+    });
+  } else {
+    //show specified folderId
+    folderProvider.findById(req.params.folderId, function (error, folder) {
+      if (error) {
+        return next(error);
+      }
+
+      var curPath = req.param('path');
+      var parUrl = null;
+
+      if (curPath) {
+        var parPath = curPath.split('/');
+        parPath.pop();
+        parPath = parPath.join('/');
+        parUrl = querystring.stringify({
+          path: parPath
+        });
+      }
+
+      if (req.param('type') == 'file') {
+        //show one file
+        var filename = req.param('name');
+        if (!filename) {
+          filename = 'file';
+        }
+
+        //set Content-Disposition so file is downloaded by the browser (Content-Type will be set by .ext)
+        res.attachment(filename);
+
+        //content types that wil be treated as text (editable)
+        var text_types = [
+            'text/',
+            'application/x-tex',
+            'application/x-sh',
+            'application/x-javascript',
+            'application/xhtml+xml',
+            'application/xml'
+        ]
+
+        //content types that will be passed to the browser and not downloaded
+        var view_types = [
+            'image/',
+            'application/pdf',
+        ]
+
+        var is_editable = false;
+        text_types.forEach(function(t){
+            if(res.get('Content-Type').search(t) != -1 ){
+                //display directly if text type
+                //res.set('Content-Disposition', '')
+                res.removeHeader('Content-Disposition')
+                res.set('Content-Type', 'text/plain')
+                is_editable = true
+            }
+        });
+
+        view_types.forEach(function(t){
+            if(res.get('Content-Type').search(t) != -1 ){
+                res.set('Content-Disposition', '')
+            }
+        });
+
+        //download file
+        folder.getRawData(req,
+          function (error, data) {
+            if (error) {
+              return next(error);
+            }
+            if (is_editable) {
+              res.removeHeader('Content-Type')
+              res.render('preview', {
+                'file': filename,   //this file
+                'path': curPath,    //repo path to file parent
+                'parent': folder,   //parent directory id
+                'data': data
+              })
+              return
+            } else {
+              res.write(data);
+            }
+          },
+          function (error, data) {
+            if (error) {
+              return next(error);
+            }
+            if(!is_editable)
+              res.end();
+          }
+        );
+      } else {
+        //show folder contents
+        folder.getItems(req, function (error, list) {
+          if (error) {
+            return next(error);
+          }
+
+          res.render('folder', {
+            folder: folder,
+            tree: list,
+            path: curPath,
+            parUrl: parUrl
+          });
+        });
+      }
+    });
+  }
+});
+
+app.post('/editFile/:folderId', middleware.isLogged, function (req, res, next) {
+  if (!req.params.folderId) {
+    //TODO error
+  } else {
+    folderProvider.findById(req.params.folderId, function (error, folder) {
+      if (error) {
+        return next(error);
+      }
+      var filename = req.param('path')
+      if (req.body.content && filename) {
+          //call api method or common helper method to save file
+          folder.putFile(req, req.body.content,
+            function (error, data) {
+              if (error) {
+                return next(error);
+              }
+              console.log(data)
+              res.redirect('/folder/'+folder.id)
+          });
+      } else { return next(new Error('no data from form')) }
+    });
+  }
+});
+
 app.get('/recentchanges/:folderId?', middleware.isLogged, middleware.checkFolderAcl, function (req, res, next) {
   folderProvider.findById(req.params.folderId, function (error, folder) {
     if (error) {
@@ -409,111 +558,6 @@ app.get('/recentchanges/:folderId?', middleware.isLogged, middleware.checkFolder
       });
     });
   });
-});
-
-app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, function (req, res, next) {
-  if (!req.params.folderId) {
-    //show folder list
-    folderProvider.findAll(function (error, folders) {
-      if (error) {
-        return next(error);
-      }
-
-      utils.aclFilterFolderList(folders, req.currentUser);
-
-      res.render('folders', {
-        folders: folders
-      });
-    });
-  } else {
-    //show specified folderId
-    folderProvider.findById(req.params.folderId, function (error, folder) {
-      if (error) {
-        return next(error);
-      }
-
-      if (req.param('type') == 'file') {
-        //show one file
-        var filename = req.param('name');
-        if (!filename) {
-          filename = 'file';
-        }
-
-        //set Content-Disposition so file is downloaded (Content-Type will be set by .ext)
-        res.attachment(filename);
-
-        var text_types = [
-            'text/',
-            'application/x-tex',
-            'application/x-sh',
-            'application/x-javascript',
-            'application/xhtml+xml',
-            'application/xml'
-        ]
-
-        var view_types = [
-            'image/',
-            'application/pdf',
-        ]
-
-        text_types.forEach(function(t){
-            if(res.get('Content-Type').search(t) != -1 ){
-                //display directly if text type
-                res.set('Content-Disposition', '')
-                res.set('Content-Type', 'text/plain')
-            }
-        });
-
-        view_types.forEach(function(t){
-            if(res.get('Content-Type').search(t) != -1 ){
-                res.set('Content-Disposition', '')
-            }
-        });
-
-        //download file
-        folder.getRawData(req,
-          function (error, data) {
-            if (error) {
-              return next(error);
-            }
-            res.write(data);
-          },
-          function (error, data) {
-            if (error) {
-              return next(error);
-            }
-            res.end();
-          }
-        );
-      } else {
-        //show folder contents
-        folder.getItems(req, function (error, list) {
-          if (error) {
-            return next(error);
-          }
-
-          var curPath = req.param('path');
-          var parUrl = null;
-
-          if (curPath) {
-            var parPath = curPath.split('/');
-            parPath.pop();
-            parPath = parPath.join('/');
-            parUrl = querystring.stringify({
-              path: parPath
-            });
-          }
-
-          res.render('folder', {
-            folder: folder,
-            tree: list,
-            path: curPath,
-            parUrl: parUrl
-          });
-        });
-      }
-    });
-  }
 });
 
 app.get('/download/:folderId', middleware.isLogged, middleware.checkFolderAcl, function (req, res, next) {
