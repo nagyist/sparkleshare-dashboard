@@ -487,7 +487,7 @@ app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, fu
               res.removeHeader('Content-Type')
               res.render('preview', {
                 'file': filename,   //this file
-                'path': curPath,    //repo path to file parent
+                'path': querystring.stringify({path: curPath}),    //repo path to file parent
                 'parent': folder,   //parent directory id
                 'data': data,
                 'filehash': req.param('hash')
@@ -541,7 +541,7 @@ app.post('/putFile/:folderId', middleware.isLogged, function (req, res, next) {
               if (error) {
                 return next(error);
               }
-              res.redirect('/folder/'+folder.id+'?type=dir&path='+pathlib.basename(filepath))
+              res.redirect('/folder/'+folder.id+'?type=dir&'+querystring.stringify({path: pathlib.dirname(filepath)}))
           });
       } else { return next(new Error('no data from form')) }
     });
