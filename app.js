@@ -14,7 +14,7 @@ var i18n = require("i18n");
 var config = require('./config');
 var errors = require('./error');
 var utils = require('./utils');
-var path = require('path');
+var pathlib = require('path');
 
 var RedisStore = require('connect-redis')(session);
 var redis = require('redis'),
@@ -82,7 +82,7 @@ app.use(cookieParser());
 app.use(flash());
 app.use(sass.middleware({
     src: __dirname,
-    dest: path.join(__dirname, 'public'),
+    dest: pathlib.join(__dirname, 'public'),
     debug: false
 }));
 app.use(express.static(__dirname + '/public'));
@@ -483,6 +483,7 @@ app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, fu
               return next(error);
             }
             if (is_editable) {
+              //if we have a viewable type, render preview/edit view
               res.removeHeader('Content-Type')
               res.render('preview', {
                 'file': filename,   //this file
@@ -493,6 +494,7 @@ app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, fu
               })
               return
             } else {
+              //otherwise just return the file contents
               res.write(data);
             }
           },
@@ -523,24 +525,23 @@ app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, fu
   }
 });
 
-app.post('/editFile/:folderId', middleware.isLogged, function (req, res, next) {
+app.post('/putFile/:folderId', middleware.isLogged, function (req, res, next) {
   if (!req.params.folderId) {
-    //TODO error
+    return next(new Error('No folder id given'))
   } else {
     folderProvider.findById(req.params.folderId, function (error, folder) {
       if (error) {
         return next(error);
       }
-      var filename = req.param('path')
-      if (req.body.content && filename) {
+      var filepath = req.param('path')
+      if (req.body.content && filepath) {
           //call api method or common helper method to save file
           folder.putFile(req, req.body.content,
             function (error, data) {
               if (error) {
                 return next(error);
               }
-              console.log(data)
-              res.redirect('/folder/'+folder.id)
+              res.redirect('/folder/'+folder.id+'?type=dir&path='+pathlib.basename(filepath))
           });
       } else { return next(new Error('no data from form')) }
     });

@@ -357,6 +357,7 @@ GitBackend.prototype = {
   //overwrite an existing file
   putFile: function(req, data, next) {
     var path = req.param('path');
+    console.log(path)
     if (!path) {
       next(new Error('No file path given'));
     }
@@ -413,8 +414,20 @@ GitBackend.prototype = {
             callback(null)
         });
       },
+
+      function(callback){
+        //get original path and file
+        console.log("Checkout file")
+        parent.execGit(['--work-tree=' + wc_dir, 'checkout', 'HEAD', '--', path, 'ignore_output'],
+          function(error, data){
+            if (error) { return next(error); }
+            callback(null)
+        });
+      },
+
       function(callback){
         //save data into the file given by path
+        //fs.mkdir(pathlib.basename(path), 0777, true, function(){ ... })
         fs.writeFile(pathlib.join(wc_dir, path), data, function(error){
           if(error) { return next(error); }
           callback(null)
@@ -431,9 +444,8 @@ GitBackend.prototype = {
       },
 
       function(callback){
-        console.log("Commit new file")
-
         //commit only this new file
+        console.log("Commit new file")
         parent.execGit(['--work-tree=' + wc_dir, 'commit', pathlib.join(wc_dir, path), '-m',
           '/ ‘' + path + '‘', "ignore_return_code"], function(error, data){
             if (error) { return next(error); }
@@ -444,8 +456,6 @@ GitBackend.prototype = {
       function(callback){
         //push the commit
         console.log("Push commit")
-
-        //commit only this new file
         parent.execGit(['--work-tree=' + wc_dir, 'push'],
           function(error, data){
             if (error) { return next(error); }

@@ -16,7 +16,7 @@ block main
         a(href=basepath + "/folder/" + parent.id + '?type=file&download=force&name='+ file +
                 '&hash=' + filehash) #{__i('Download file')}
 
-    form(action=basepath + '/editFile/'+parent.id+'?path='+file, method='post')
+    form(action=basepath + '/putFile/'+parent.id+'?path='+path, method='post')
         textarea(name='content').edit-box !{data}
         input(type='submit', value=__i('Save file')).edit-save
 
