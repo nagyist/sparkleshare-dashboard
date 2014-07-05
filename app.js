@@ -21,7 +21,9 @@ var redis = require('redis'),
   redisClient = redis.createClient();
 var session = session({
   secret: config.sessionSecret,
-  store: new RedisStore()
+  store: new RedisStore(),
+  cookie: {maxAge: config.sessionValidFor},
+  rolling: true
 });
 
 var sass = require('node-sass')
@@ -41,6 +43,9 @@ if (config.https.enabled) {
   var server = https.createServer(options, app).listen(config.listen.port, function () {
     console.log("Express server listening on port " + config.listen.port);
   });
+  if (app.get('env') === 'production') {
+    session.cookie.secure = true  // serve secure cookies
+  }
 } else {
   http = require('http')
   app = express()
@@ -103,7 +108,12 @@ app.use(function (req, res, next) {
   }
   res.locals.__i = i18n.__;
   res.locals.__n = i18n.__n;
+
   res.locals.flash = req.flash;
+
+  res.header('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0, max-age=0')
+  res.header('Expires', '-1')
+  res.header('Pragma', 'no-cache')
   next();
 });
 

@@ -19,8 +19,11 @@ exports.https = {
 exports.basepath = '';
 exports.externalUrl = null;
 
-// 300 sec
+// time until link code is invalidated (in seconds)
 exports.linkCodeValidFor = 300;
+
+//time until session cookie is invalidated
+exports.sessionValidFor = 3600000 * 24     //24 hours
 
 // none | min | info | debug
 exports.logging = 'none';
