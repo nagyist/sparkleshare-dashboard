@@ -11,12 +11,22 @@ block main
         - if (parent.pub)
           a(href=basepath + "/publicFolder/" + parent.id) (#{__i('Back to folder')})
         - else
-          a(href=basepath + "/folder/" + parent.id + '?type=dir') #{__i('Back to folder')}
+          a(href=basepath + "/folder/" + parent.id + '?type=dir&path='+ parent_repo_path) #{__i('Back to folder')}
       li
         a(href=basepath + "/folder/" + parent.id + '?type=file&download=force&name='+ file +
                 '&hash=' + filehash) #{__i('Download file')}
+      li
+        a#edit-link #{__i('Edit file')}
+        script.
+            $(document).ready(function(){
+                $("#edit-link").click(function() {
+                    $("textarea.edit-box").prop("disabled", "");
+                    $("input.edit-save").show();
+                    $(this).hide();
+                });
+            });
 
-    form(action=basepath + '/putFile/'+parent.id+'?'+path, method='post')
-        textarea(name='content').edit-box !{data}
+    form(action=basepath + '/putFile/'+parent.id+'?path='+path, method='post')
+        textarea(name='content', disabled='disabled').edit-box !{data}
         input(type='submit', value=__i('Save file')).edit-save
 

@@ -427,6 +427,7 @@ app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, fu
         return next(error);
       }
 
+      //get current repo path from url
       var curPath = req.param('path');
       var parUrl = null;
 
@@ -496,10 +497,11 @@ app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, fu
               //if we have a viewable type, render preview/edit view
               res.removeHeader('Content-Type')
               res.render('preview', {
-                'file': filename,   //this file
-                'path': querystring.stringify({path: curPath}),    //repo path to file parent
-                'parent': folder,   //parent directory id
-                'data': data,
+                'file': filename,   //this file (called file because jade has filename reserved)
+                'path': querystring.escape(curPath),    //repo path to file (with filename)
+                'parent': folder,   //parent directory object
+                'parent_repo_path': querystring.escape(pathlib.dirname(curPath)),  //parent path in repo
+                'data': data,       //file contents
                 'filehash': req.param('hash')
               })
               return
