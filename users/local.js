@@ -1,19 +1,19 @@
 var crypto = require('crypto');
-var errors = require('./error');
+var errors = require('../error');
+
+LocalUserProvider = function (options) {
+  this.rclient = options.redisClient;
+  this.deviceProvider = options.deviceProvider;
+};
 
 function hash(msg, key) {
   return crypto.createHmac('sha256', key).update(msg).digest('hex');
 }
 
-UserProvider = function(redisClient, deviceProvider) {
-  this.rclient = redisClient;
-  this.deviceProvider = deviceProvider;
-};
-
-UserProvider.prototype = {
-  createNew: function(login, name, password, admin, acl, next) {
+LocalUserProvider.prototype = {
+  createNew: function (login, name, password, admin, acl, next) {
     var provider = this;
-    this.findByLogin(login, function(error, user) {
+    this.findByLogin(login, function (error, user) {
       if (!user) {
         var newUser = new User();
         newUser.login = login;
@@ -21,8 +21,10 @@ UserProvider.prototype = {
         newUser.setPassword(password);
         newUser.admin = admin;
         newUser.acl = acl;
-        provider.rclient.incr('seq:nextUserId', function(error, nuid) {
-          if (error) { return next(error); }
+        provider.rclient.incr('seq:nextUserId', function (error, nuid) {
+          if (error) {
+            return next(error);
+          }
           newUser.uid = nuid;
 
           provider.rclient.set("uid:" + newUser.uid + ":user", JSON.stringify(newUser));
@@ -38,12 +40,16 @@ UserProvider.prototype = {
     });
   },
 
-  updateUser: function(user, next) {
+  updateUser: function (user, next) {
     var provider = this;
 
-    this.findByUid(user.uid, function(error, fuser) {
-      if (error) { return next(error); }
-      if (!fuser) { return next(new errors.NotFound("User not found")); }
+    this.findByUid(user.uid, function (error, fuser) {
+      if (error) {
+        return next(error);
+      }
+      if (!fuser) {
+        return next(new errors.NotFound("User not found"));
+      }
       if (user.login != fuser.login) {
         return next(new Error("You can not change login!"));
       }
@@ -54,14 +60,18 @@ UserProvider.prototype = {
     });
   },
 
-  deleteUser: function(uid, next) {
+  deleteUser: function (uid, next) {
     var provider = this;
 
-    this.findByUid(uid, function(error, fuser) {
-      if (error) { return next(error); }
-      if (!fuser) { return next(new errors.NotFound("User not found")); }
+    this.findByUid(uid, function (error, fuser) {
+      if (error) {
+        return next(error);
+      }
+      if (!fuser) {
+        return next(new errors.NotFound("User not found"));
+      }
 
-      var delUser = function() {
+      var delUser = function () {
         provider.rclient.del("uid:" + fuser.uid + ":user");
         provider.rclient.del("uid:" + fuser.uid + ":devices");
         provider.rclient.del("uid:" + fuser.uid + ":deviceNames");
@@ -70,16 +80,20 @@ UserProvider.prototype = {
       };
 
       // unlink all devices owned by user
-      provider.deviceProvider.findByUserId(fuser.uid, function(error, devices) {
-        if (error) { return next(error); }
+      provider.deviceProvider.findByUserId(fuser.uid, function (error, devices) {
+        if (error) {
+          return next(error);
+        }
 
         var count = devices.length;
         if (count === 0) {
           delUser();
         }
-        devices.forEach(function(device) {
-          provider.deviceProvider.unlinkDevice(device.id, function(error) {
-            if (error) { return next(error); }
+        devices.forEach(function (device) {
+          provider.deviceProvider.unlinkDevice(device.id, function (error) {
+            if (error) {
+              return next(error);
+            }
             if (--count === 0) {
               delUser();
             }
@@ -91,19 +105,29 @@ UserProvider.prototype = {
     });
   },
 
-  findByUid: function(uid, next) {
-    this.rclient.get("uid:" + uid + ":user", function(error, data) {
-      if (error) { return next(error); }
-      if (!data) { return next(); }
+  findByUid: function (uid, next) {
+    this.rclient.get("uid:" + uid + ":user", function (error, data) {
+      if (error) {
+        return next(error);
+      }
+      if (!data) {
+        return next();
+      }
       next(null, new User(JSON.parse(data)));
     });
   },
 
-  findByLogin: function(login, next) {
+  findByLogin: function (login, next) {
     var provider = this;
-    provider.rclient.get("login:" + login + ":uid", function(error, uid) {
-      if (error) { return next(error); }
-      if (!uid) { next(); return null; }
+    provider.rclient.get("login:" + login + ":uid", function (error, uid) {
+      
+      if (error) {
+        return next(error);
+      }
+      if (!uid) {
+        next();
+        return null;
+      }
       if (next) {
         provider.findByUid(uid, next);
       }
@@ -112,22 +136,26 @@ UserProvider.prototype = {
     });
   },
 
-  getUserCount: function(next) {
+  getUserCount: function (next) {
     this.rclient.scard("uids", next);
   },
 
-  findAll: function(next) {
+  findAll: function (next) {
     var provider = this;
-    provider.rclient.smembers("uids", function(error, uids)  {
-      if (error) { return next(error); }
+    provider.rclient.smembers("uids", function (error, uids) {
+      if (error) {
+        return next(error);
+      }
       var r = [];
       var count = uids.length;
       if (count === 0) {
-        next (null, r);
+        next(null, r);
       }
-      uids.forEach(function(uid) {
-        provider.findByUid(uid, function(error, user) {
-          if (error) { return next(error); }
+      uids.forEach(function (uid) {
+        provider.findByUid(uid, function (error, user) {
+          if (error) {
+            return next(error);
+          }
           r.push(user);
           if (--count === 0) {
             next(null, r);
@@ -135,10 +163,20 @@ UserProvider.prototype = {
         });
       });
     });
+  },
+
+  serializeUser: function (user, next) {
+    next(null, user.login);
+  },
+
+  deserializeUser: function (login, next) {
+    this.findByLogin(login, function (err, user) {
+      next(err, user);
+    });
   }
 };
 
-User = function(data) {
+User = function (data) {
   this.uid = null;
   this.login = "";
   this.name = "";
@@ -159,7 +197,7 @@ User = function(data) {
 };
 
 User.prototype = {
-  genSalt: function(len) {
+  genSalt: function (len) {
     var chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
     var salt = '';
 
@@ -169,15 +207,15 @@ User.prototype = {
     return salt;
   },
 
-  setPassword: function(password) {
+  setPassword: function (password) {
     var salt = this.genSalt(8);
     this.pass = hash(password, salt);
     this.salt = salt;
   },
 
-  checkPassword: function(password) {
+  checkPassword: function (password) {
     return this.pass == hash(password, this.salt);
   }
 };
 
-exports.UserProvider = UserProvider;
+exports.LocalUserProvider = LocalUserProvider;
