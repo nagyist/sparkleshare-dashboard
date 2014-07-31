@@ -20,13 +20,17 @@ block main
         script.
             $(document).ready(function(){
                 $("#edit-link").click(function() {
-                    $("textarea.edit-box").prop("disabled", "");
+                    $("#preview-box").hide();
+                    $("textarea.edit-box").show();
                     $("input.edit-save").show();
                     $(this).hide();
                 });
             });
 
+    div#preview-box
+        pre !{data}
+
     form(action=basepath + '/putFile/'+parent.id+'?path='+path, method='post')
-        textarea(name='content', disabled='disabled').edit-box !{data}
+        textarea(name='content').edit-box !{data}
         input(type='submit', value=__i('Save file')).edit-save
 
