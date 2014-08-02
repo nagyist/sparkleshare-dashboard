@@ -118,26 +118,28 @@ passport.use(new LocalStrategy({
   });
 }));
 
-passport.use(new UserAppStrategy({
-  appId: config.appId,
-  usernameField: 'login'
-}, function (user, next) {
-  process.nextTick(function () {
-    // Found on UserApp.io
-    if (user.email) {
-      userProvider.findByLogin(user.email, function (error, profile) {
-        if (!profile) {
-          return next(new Error('Invalid login'));
-        }
-        profile.token = user.token;
-        return next(null, profile);
-      });
-      // Already authenticated
-    } else {
-      return next(null, user);
-    }
-  });
-}));
+if(config.appId){
+  passport.use(new UserAppStrategy({
+    appId: config.appId,
+    usernameField: 'login'
+  }, function (user, next) {
+    process.nextTick(function () {
+      // Found on UserApp.io
+      if (user.email) {
+        userProvider.findByLogin(user.email, function (error, profile) {
+          if (!profile) {
+            return next(new Error('Invalid login'));
+          }
+          profile.token = user.token;
+          return next(null, profile);
+        });
+        // Already authenticated
+      } else {
+        return next(null, user);
+      }
+    });
+  }));
+}
 
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
