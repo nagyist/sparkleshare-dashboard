@@ -21,12 +21,14 @@ var redis = require('redis');
 var redisClient = redis.createClient();
 
 var session = session({
-  secret: config.sessionSecret,
-  store: new RedisStore(),
   cookie: {
     maxAge: config.sessionValidFor
   },
-  rolling: true
+  resave: true,
+  saveUninitialized: true,
+  rolling: true,
+  secret: config.sessionSecret,
+  store: new RedisStore()
 });
 
 var sass = require('node-sass');
@@ -88,8 +90,6 @@ var userProvider = new UserProvider({
 });
 
 var passport = require('passport');
-var LocalStrategy = require('passport-local').Strategy;
-var UserAppStrategy = require('passport-userapp').Strategy;
 
 passport.serializeUser(function (user, next) {
   userProvider.serializeUser(user, next);
@@ -99,47 +99,7 @@ passport.deserializeUser(function (login, next) {
   userProvider.deserializeUser(login, next);
 });
 
-passport.use(new LocalStrategy({
-  usernameField: 'login',
-  passwordField: 'password'
-}, function (login, password, next) {
-  process.nextTick(function () {
-    userProvider.findByLogin(login, function (error, user) {
-      if (!user) {
-        return next(new Error('Invalid login'));
-      }
-
-      if (user.checkPassword(password)) {
-        return next(null, user);
-      } else {
-        return next(new Error('Invalid login'));
-      }
-    });
-  });
-}));
-
-if(config.appId){
-  passport.use(new UserAppStrategy({
-    appId: config.appId,
-    usernameField: 'login'
-  }, function (user, next) {
-    process.nextTick(function () {
-      // Found on UserApp.io
-      if (user.email) {
-        userProvider.findByLogin(user.email, function (error, profile) {
-          if (!profile) {
-            return next(new Error('Invalid login'));
-          }
-          profile.token = user.token;
-          return next(null, profile);
-        });
-        // Already authenticated
-      } else {
-        return next(null, user);
-      }
-    });
-  }));
-}
+passport.use(userProvider.strategy)
 
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');

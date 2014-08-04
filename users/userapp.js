@@ -1,12 +1,31 @@
-var UserApp = require("userapp");
-var Local = require('./local').LocalUserProvider;
+var UserApp = require("userapp")
+var Local = require('./local').LocalUserProvider
+var Strategy = require('passport-userapp').Strategy
 
 UAUserProvider = function (options) {
   UserApp.initialize({
     appId: options.appId
   });
-  this.local = new Local(options);
-};
+
+  var local = this.local = new Local(options)
+  this.strategy = new Strategy(options, function (user, next) {
+    process.nextTick(function () {
+      if (user.email) {
+        // Found on UserApp.io
+        local.findByLogin(user.email, function (error, profile) {
+          if (!profile) {
+            return next(new Error('Invalid login'))
+          }
+          profile.token = user.token
+          return next(null, profile)
+        })
+      } else {
+        // Already authenticated
+        return next(null, user)
+      }
+    })
+  })
+}
 
 UAUserProvider.prototype = {
   createNew: function (login, name, password, admin, acl, next) {
