@@ -362,6 +362,9 @@ GitBackend.prototype = {
       next(new Error('No file path given'));
     }
 
+    //enforce unix file ending
+    data = data.replace(/(?:\r\n|\r)/g, '\n')
+
     var temp_dir = config.backend.git.temp
     var wc_dir = pathlib.join(temp_dir, pathlib.basename(this.path))
 
@@ -417,7 +420,7 @@ GitBackend.prototype = {
 
       function(callback){
         //get original path and file
-        console.log("Checkout file")
+        //console.log("Checkout file")
         parent.execGit(['--work-tree=' + wc_dir, 'checkout', 'HEAD', '--', path, 'ignore_output'],
           function(error, data){
             if (error) { return next(error); }
@@ -435,7 +438,7 @@ GitBackend.prototype = {
       },
       function(callback){
         //add the new file
-        console.log("Add new file")
+        //console.log("Add new file")
         parent.execGit(['--work-tree=' + wc_dir, 'add', pathlib.join(wc_dir, path), 'ignore_output'],
           function(error, data){
             if (error) { return next(error); }
@@ -445,7 +448,7 @@ GitBackend.prototype = {
 
       function(callback){
         //commit only this new file
-        console.log("Commit new file")
+        //console.log("Commit new file")
         parent.execGit(['--work-tree=' + wc_dir, 'commit', pathlib.join(wc_dir, path), '-m',
           '/ ‘' + path + '‘', "ignore_return_code"], function(error, data){
             if (error) { return next(error); }
@@ -455,7 +458,7 @@ GitBackend.prototype = {
 
       function(callback){
         //push the commit
-        console.log("Push commit")
+        //console.log("Push commit")
         parent.execGit(['--work-tree=' + wc_dir, 'push'],
           function(error, data){
             if (error) { return next(error); }
@@ -464,7 +467,10 @@ GitBackend.prototype = {
       },
       function(callback){
         //delete working copy again
-        console.log("Delete working copy")
+        //TODO: this seems to be the slowest part, can we speed it up? could be done async probably
+        //without waiting for it
+
+        //console.log("Delete working copy")
         deleteFolderRecursive = function(path) {
           var files = [];
           if( fs.existsSync(path) ) {
@@ -484,7 +490,7 @@ GitBackend.prototype = {
         callback(null)
       },
       function(callback){
-        console.log("finished editing file")
+        //console.log("finished editing file")
         parent.path = parent.old_this_path
         callback(null)
         next(null, "Ok.")
