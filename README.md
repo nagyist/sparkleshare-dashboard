@@ -2,11 +2,9 @@ This is another fork of a fork of Sparkleshare-Dashboard.
 This version will run on recent versions of nodejs (>= 0.10) and express (>=4.0).
 Additionally, the UI was visually improved. It now looks a lot better on mobile phones.
 
-It is now possible to edit single text files from the Dashboard, an API method
+It is possible to edit single text files from the Dashboard, an API method
 is also in place to be used from mobile clients.
 
-Cheers,
-- Stefan <stefan at lanpartei.de>
 
 
 The following are the previous contents of the README.md file.
@@ -52,7 +50,7 @@ folders from your browser (if not encrypted).
 
 The interface should be really easy to set up. 
 
-Ofcourse, "easy" is a relative term, and people are usually considered 
+Of course, "easy" is a relative term, and people are usually considered 
 geeky already when they have their own private (virtual) server.
 
 However, many people know how to set up a basic website, or how to set up
