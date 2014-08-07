@@ -1,5 +1,4 @@
 var Dashboard = require('./local').LocalUserProvider;
-var UserApp = require('./userapp').UAUserProvider;
 
 UserProvider = function (options) {
   this.type = options.type;
@@ -7,10 +6,6 @@ UserProvider = function (options) {
 
   if (this.type === 'local') {
     this.userProvider = new Dashboard(options);
-  }
-
-  if (this.type === 'userapp') {
-    this.userProvider = new UserApp(options);
   }
 };
 

@@ -82,16 +82,12 @@ var deviceProvider = new DeviceProvider(redisClient);
 var UserProvider = require('./users/userProvider').UserProvider;
 var userProvider = new UserProvider({
   type: config.userProvider,
-  appId: config.userAppId,
   redisClient: redisClient,
   deviceProvider: deviceProvider
 });
 
 var passport = require('passport');
 var LocalStrategy = require('passport-local').Strategy;
-if (config.userProvider == 'userapp') {
-  var UserAppStrategy = require('passport-userapp').Strategy;
-}
 
 passport.serializeUser(function (user, next) {
   userProvider.serializeUser(user, next);
@@ -118,27 +114,6 @@ if (config.userProvider == 'local') {
           return next(new Error('Invalid login'));
         }
       });
-    });
-  }));
-} else if (config.userProvider == 'userapp') {
-  passport.use(new UserAppStrategy({
-    appId: config.userAppId,
-    usernameField: 'login'
-  }, function (user, next) {
-    process.nextTick(function () {
-      // Found on UserApp.io
-      if (user.email) {
-        userProvider.findByLogin(user.email, function (error, profile) {
-          if (!profile) {
-            return next(new Error('Invalid login'));
-          }
-          profile.token = user.token;
-          return next(null, profile);
-        });
-        // Already authenticated
-      } else {
-        return next(null, user);
-      }
     });
   }));
 }
