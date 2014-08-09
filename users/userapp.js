@@ -1,11 +1,11 @@
 var UserApp = require("userapp")
-var Local = require('./local').LocalUserProvider
+var Local = require('./local').UserProvider
 var Strategy = require('passport-userapp').Strategy
 
-UAUserProvider = function (options) {
+UAUserProvider = function (options, redisClient, deviceProvider) {
   UserApp.initialize(options);
 
-  var local = this.local = new Local(options)
+  var local = this.local = new Local(options, redisClient, deviceProvider)
   this.strategy = new Strategy(options, function (user, next) {
     process.nextTick(function () {
       if (user.email) {
