@@ -2,9 +2,9 @@ var Strategy = require('passport-local').Strategy
 var crypto = require('crypto');
 var errors = require('../error');
 
-LocalUserProvider = function (options) {
-  this.rclient = options.redisClient;
-  this.deviceProvider = options.deviceProvider;
+LocalUserProvider = function (options, redisClient, deviceProvider) {
+  this.rclient = redisClient;
+  this.deviceProvider = deviceProvider;
 
   var provider = this;
   this.strategy = new Strategy(options, function (login, password, next) {
@@ -236,4 +236,4 @@ User.prototype = {
   }
 };
 
-exports.LocalUserProvider = LocalUserProvider;
+exports.UserProvider = LocalUserProvider;

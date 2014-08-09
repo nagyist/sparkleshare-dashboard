@@ -82,12 +82,7 @@ app.use(function (req, res, next) {
 var DeviceProvider = require('./deviceProvider').DeviceProvider;
 var deviceProvider = new DeviceProvider(redisClient);
 var UserProvider = require('./users/userProvider').UserProvider;
-var userProvider = new UserProvider({
-  type: config.userProvider,
-  appId: config.appId,
-  redisClient: redisClient,
-  deviceProvider: deviceProvider
-});
+var userProvider = new UserProvider(config.userProvider, redisClient, deviceProvider)
 
 var passport = require('passport');
 
@@ -197,11 +192,11 @@ app.route('/login').get(function (req, res) {
       }
     }
   });
-}).post(passport.authenticate(config.userProvider, {
+}).post(passport.authenticate(config.userProvider.name, {
   failureRedirect: '/login',
   failureFlash: 'Invalid username or password.'
 }), function (req, res) {
-  if (config.userProvider === "userapp") {
+  if (config.userProvider.name === "userapp") {
     res.cookie('ua_session_token', req.user.token);
     res.redirect('back');
   }

@@ -1,17 +1,8 @@
-var Dashboard = require('./local').LocalUserProvider
-var UserApp = require('./userapp').UAUserProvider
-
-UserProvider = function (options) {
-  this.type = options.type
-
-  if (this.type === 'local') {
-    this.userProvider = new Dashboard(options)
-  }
-
-  if (this.type === 'userapp') {
-    this.userProvider = new UserApp(options)
-  }
-
+UserProvider = function (options, redisClient, deviceProvider) {
+  this.name = options.name
+  
+  var Provider = require('./' + this.name).UserProvider
+  this.userProvider = new Provider(options, redisClient, deviceProvider)
   this.strategy = this.userProvider.strategy
 }
 

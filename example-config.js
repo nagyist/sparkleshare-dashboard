@@ -42,5 +42,8 @@ exports.backend = {
   }
 };
 
-exports.userProvider = 'local'  // 'local', or 'userapp' for https://www.userapp.io/ support
-exports.appId = ''              // userapp id
+exports.userProvider = {
+  name: 'local',                        // 'local', or 'userapp' for https://www.userapp.io/ support
+  usernameField: 'login',
+  passwordField: 'password'
+}

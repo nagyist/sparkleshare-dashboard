@@ -3,9 +3,7 @@ var Local = require('./local').LocalUserProvider
 var Strategy = require('passport-userapp').Strategy
 
 UAUserProvider = function (options) {
-  UserApp.initialize({
-    appId: options.appId
-  });
+  UserApp.initialize(options);
 
   var local = this.local = new Local(options)
   this.strategy = new Strategy(options, function (user, next) {
@@ -33,15 +31,17 @@ UAUserProvider.prototype = {
 
     local.findByLogin(login, function (error, user) {
       if (!user) {
-        UserApp.User.save({
-          "first_name": name,
-          "email": login,
-          "password": password,
+        UserApp.User.count({
+          filters :[{
+            query: "login:" + login
+          }]
         }, function (error, result) {
           if (error) {
             next(new Error(error.message));
-          } else {
+          } else if(result.count) {
             local.createNew(login, name, password, admin, acl, next);
+          } else {
+            next(new Error('User does not exist'));
           }
         });
       } else {
@@ -51,29 +51,11 @@ UAUserProvider.prototype = {
   },
 
   updateUser: function (user, next) {
-
-    UserApp.User.save({
-      "first_name": user.name,
-    }, function (error, result) {
-      if (error) {
-        next(error);
-      } else {
-        next(null, new User(result));
-      }
-    });
+    this.local.deleteUser(uid, next);
   },
 
   deleteUser: function (uid, next) {
-
-    UserApp.User.remove({
-      "user_id": uid
-    }, function (error, result) {
-      if (error) {
-        next(error);
-      } else {
-        next();
-      }
-    });
+    this.local.deleteUser(uid, next);
   },
 
   findByUid: function (uid, next) {
@@ -103,4 +85,4 @@ UAUserProvider.prototype = {
   }
 }
 
-exports.UAUserProvider = UAUserProvider;
+exports.UserProvider = UAUserProvider;
