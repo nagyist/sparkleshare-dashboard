@@ -135,6 +135,7 @@ app.use(function (req, res, next) {
 
   res.locals.flash = req.flash;
 
+  //prevent caching of file preview and listing to prevent showing old data
   res.header('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0, max-age=0')
   res.header('Expires', '-1')
   res.header('Pragma', 'no-cache')
@@ -200,7 +201,6 @@ app.route('/login').get(function (req, res) {
     res.cookie('ua_session_token', req.user.token);
     res.redirect('back');
   }
-
   res.redirect('back');
 });
 
