@@ -219,10 +219,6 @@ app.route('/login').get(function (req, res) {
   failureRedirect: '/login',
   failureFlash: 'Invalid username or password.'
 }), function (req, res) {
-  if (config.userProvider === "userapp") {
-    res.cookie('ua_session_token', req.user.token);
-    res.redirect('back');
-  }
   res.redirect('back');
 });
 
