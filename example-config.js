@@ -42,4 +42,8 @@ exports.backend = {
   }
 };
 
-exports.userProvider = 'local'  // for now, only 'local' (using Redis) is available
+exports.userProvider = {
+  name: 'local',                // for now, only 'local' (using Redis) is available
+  usernameField: 'login',
+  passwordField: 'password'
+}

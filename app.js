@@ -21,12 +21,14 @@ var redis = require('redis');
 var redisClient = redis.createClient();
 
 var session = session({
-  secret: config.sessionSecret,
-  store: new RedisStore(),
   cookie: {
     maxAge: config.sessionValidFor
   },
-  rolling: true
+  resave: true,
+  saveUninitialized: true,
+  rolling: true,
+  secret: config.sessionSecret,
+  store: new RedisStore()
 });
 
 var sass = require('node-sass');
@@ -80,14 +82,9 @@ app.use(function (req, res, next) {
 var DeviceProvider = require('./deviceProvider').DeviceProvider;
 var deviceProvider = new DeviceProvider(redisClient);
 var UserProvider = require('./users/userProvider').UserProvider;
-var userProvider = new UserProvider({
-  type: config.userProvider,
-  redisClient: redisClient,
-  deviceProvider: deviceProvider
-});
+var userProvider = new UserProvider(config.userProvider, redisClient, deviceProvider)
 
 var passport = require('passport');
-var LocalStrategy = require('passport-local').Strategy;
 
 passport.serializeUser(function (user, next) {
   userProvider.serializeUser(user, next);
@@ -97,26 +94,7 @@ passport.deserializeUser(function (login, next) {
   userProvider.deserializeUser(login, next);
 });
 
-if (config.userProvider == 'local') {
-  passport.use(new LocalStrategy({
-    usernameField: 'login',
-    passwordField: 'password'
-  }, function (login, password, next) {
-    process.nextTick(function () {
-      userProvider.findByLogin(login, function (error, user) {
-        if (!user) {
-          return next(new Error('Invalid login'));
-        }
-
-        if (user.checkPassword(password)) {
-          return next(null, user);
-        } else {
-          return next(new Error('Invalid login'));
-        }
-      });
-    });
-  }));
-}
+passport.use(userProvider.strategy)
 
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
@@ -215,7 +193,7 @@ app.route('/login').get(function (req, res) {
       }
     }
   });
-}).post(passport.authenticate(config.userProvider, {
+}).post(passport.authenticate(config.userProvider.name, {
   failureRedirect: '/login',
   failureFlash: 'Invalid username or password.'
 }), function (req, res) {

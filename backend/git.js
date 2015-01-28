@@ -411,7 +411,6 @@ GitBackend.prototype = {
       function(callback){
         //TODO: add email field to UserProvider
         //console.log("Set user.email")
-        console.log("Set user.email")
         parent.execGit(['config', 'user.email', req.user.login+'@'+req.user.deviceName,
           'ignore_output'], function(error, data){
             if (error) { return next(error); }
