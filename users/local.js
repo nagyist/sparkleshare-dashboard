@@ -1,10 +1,28 @@
+var Strategy = require('passport-local').Strategy
 var crypto = require('crypto');
 var errors = require('../error');
 
-LocalUserProvider = function (options) {
-  this.rclient = options.redisClient;
-  this.deviceProvider = options.deviceProvider;
-};
+LocalUserProvider = function (options, redisClient, deviceProvider) {
+  this.rclient = redisClient;
+  this.deviceProvider = deviceProvider;
+
+  var provider = this;
+  this.strategy = new Strategy(options, function (login, password, next) {
+    process.nextTick(function () {
+      provider.findByLogin(login, function (error, user) {
+        if (!user) {
+          return next(new Error('Invalid login'))
+        }
+
+        if (user.checkPassword(password)) {
+          return next(null, user);
+        } else {
+          return next(new Error('Invalid login'))
+        }
+      })
+    })
+  })
+}
 
 function hash(msg, key) {
   return crypto.createHmac('sha256', key).update(msg).digest('hex');
@@ -120,7 +138,7 @@ LocalUserProvider.prototype = {
   findByLogin: function (login, next) {
     var provider = this;
     provider.rclient.get("login:" + login + ":uid", function (error, uid) {
-      
+
       if (error) {
         return next(error);
       }
@@ -218,4 +236,4 @@ User.prototype = {
   }
 };
 
-exports.LocalUserProvider = LocalUserProvider;
+exports.UserProvider = LocalUserProvider;

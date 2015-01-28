@@ -42,4 +42,8 @@ exports.backend = {
   }
 };
 
-exports.userProvider = 'local'  // for now, only 'local' (using Redis) is available
+exports.userProvider = {
+  name: 'local',                        // 'local', or 'userapp' for https://www.userapp.io/ support
+  usernameField: 'login',
+  passwordField: 'password'
+}
