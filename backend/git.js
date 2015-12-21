@@ -358,7 +358,6 @@ GitBackend.prototype = {
   //overwrite an existing file
   putFile: function(req, data, next) {
     var path = req.param('path');
-    console.log(path)
     if (!path) {
       next(new Error('No file path given'));
     }
@@ -503,7 +502,7 @@ GitBackend.prototype = {
             */
           }
         };
-        //deleteFolderRecursive(wc_dir);
+        deleteFolderRecursive(wc_dir);
 
         callback(null)
       },

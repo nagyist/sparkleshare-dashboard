@@ -12,7 +12,7 @@ module.exports = {
     folderProvider = fp;
     linkCodeProvider = lcp;
   },
-  
+
   isLogged: function(req, res, next) {
     if (req.isAuthenticated()) {
       next();
@@ -116,17 +116,17 @@ module.exports = {
     var ident = req.header('X-SPARKLE-IDENT');
     var authCode = req.header('X-SPARKLE-AUTH');
     if (!ident || !authCode) {
-      res.send('Missing auth code', 403);
+      res.status(403).send('Missing auth code');
     } else {
       deviceProvider.findByIdent(ident, function(error, device) {
         if (!device) {
-          res.send('Invalid ident', 403);
+          res.status(403).send('Invalid ident');
         } else if (!device.ownerUid) {
-          res.send('No device owner', 500);
+          res.status(500).send('No device owner');
         } else if (device.checkAuthCode(authCode)) {
           userProvider.findByUid(device.ownerUid, function(error, user) {
             if (error || !user) {
-              res.send('Invalid owner', 403);
+              res.status(403).send('Invalid owner');
             } else {
               req.user = user;
               req.currentDevice = device;
@@ -134,7 +134,7 @@ module.exports = {
             }
           });
         } else {
-          res.send('Invalid auth code', 403);
+          res.status(403).send('Invalid auth code');
         }
       });
     }
