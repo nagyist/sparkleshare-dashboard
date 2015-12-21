@@ -12,6 +12,7 @@ var mime = require('mime');
 var fs = require('fs');
 var pathlib = require('path');
 var async = require('async');
+var exec = require('child_process').exec;
 
 function parseList(list, curPath, next) {
   var r = list.split(/\0/);
@@ -374,17 +375,18 @@ GitBackend.prototype = {
       }
     };
 
-    //create temp dir (what if it exists already, do we have permissions to create it? leave to the
-    //user for now)
+    //0th step: temp dir (left to the user for now) check if dir exists or create it
     //check if exists: fs.stat, better way to do: try to create and if it fails (dir or file with
     //that name exists), check with stat if it is a directory. if not fail and stop with proper message
-    //fs.mkdir(temp_dir, 0755, fsErrorHandler);
+    //otherwise: fs.mkdir(temp_dir, 0755, fsErrorHandler);
 
     var parent = this
 
     async.series([
       function(callback){
         //clone repo to get a working copy (files are hard linked)
+        //sparse checkout of only that directory is maybe also worth looking into (this will copy files however)
+        //http://stackoverflow.com/questions/600079/is-there-any-way-to-clone-a-git-repositorys-sub-directory-only
         parent.execGit(['clone', '-n', parent.path, wc_dir], function(error, data){
           if (error != null) { return next(error); }
           callback(null)
@@ -467,13 +469,27 @@ GitBackend.prototype = {
       },
       function(callback){
         //delete working copy again
-        //TODO: this seems to be the slowest part, can we speed it up? could be done async probably
-        //without waiting for it
 
         //console.log("Delete working copy")
         deleteFolderRecursive = function(path) {
           var files = [];
           if( fs.existsSync(path) ) {
+            //rename to random directory name to get out of the way for new checkouts
+            var rand = Math.floor(Math.random() * 10) + parseInt(new Date().getTime()).toString(36)
+            var path_rand = path.replace(/\/$/, "")+rand
+            fs.renameSync(path, path_rand)
+
+            //async delete using rm
+            var cmd = "rm -Rf " + path_rand
+            exec(cmd, function(error, stdout, stderr) {
+              // command output is in stdout
+              if (!error)
+                console.log("deleted " + path_rand)
+              else
+                console.log("error while deleting working copy: " + error)
+            });
+
+            /*
             files = fs.readdirSync(path);
             files.forEach(function(file,index){
                 var curPath = pathlib.join(path, file);
@@ -484,9 +500,11 @@ GitBackend.prototype = {
                 }
             });
             fs.rmdirSync(path);
+            */
           }
         };
-        deleteFolderRecursive(wc_dir);
+        //deleteFolderRecursive(wc_dir);
+
         callback(null)
       },
       function(callback){
