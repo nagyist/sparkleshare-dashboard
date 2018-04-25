@@ -3,20 +3,20 @@ extends layout
 block main
   h1 #{__i('Linked Devices')}
 
-  - if (devices.length < 1)
+  if (devices.length < 1)
     strong #{__i('You have no linked devices')}
-  - else
+  else
     table
       tr
-        - if (user.admin)
+        if (user.admin)
           th #{__i('Owner')}
         th #{__i('Device name')}
         th #{__i('Ident')}
         th
         th
-      - each device in devices
+      each device in devices
         tr
-          - if (user.admin)
+          if (user.admin)
             td= logins[device.ownerUid]
           td= device.name
           td= device.ident

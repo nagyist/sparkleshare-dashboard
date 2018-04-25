@@ -2,9 +2,9 @@ extends layout
 
 block main
   h1 #{__i('Modify device')} 
-    - if (d.name)
+    if (d.name)
       | "#{d.name}" (#{d.ident})
-    - else
+    else
       | "#{d.ident}"
 
   form(method="post", action=basepath + "/modifyDevice/" + d.id)

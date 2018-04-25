@@ -10,14 +10,14 @@ block main
       th #{__i('Admin')}
       th #{__i('Modify')}
       th #{__i('Delete')}
-    - each user in users
+    each user in users
       tr
         td= user.login
         td= user.name
         td
-          - if (user.admin)
+          if (user.admin)
             | #{__i('YES')}
-          - else
+          else
             | #{__i('no')}
         td
           a(href=basepath + "/modifyUser/" + user.uid) #{__i('Modify')}

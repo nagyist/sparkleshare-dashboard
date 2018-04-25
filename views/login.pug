@@ -3,7 +3,7 @@ extends layout
 block main
   h1= __i('Login to your Dashboard')
 
-  - if (!user)
+  if (!user)
     form(method="post", action=basepath + "/login")
       div.iwrapper
         label(for="login", id="loginlabel")= __i('Username:')

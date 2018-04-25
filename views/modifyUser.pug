@@ -12,18 +12,18 @@ block main
       input(type="checkbox", name="admin", value="t", checked=u.admin)
     p
       h2 #{__i('Folder ACL')}
-      - if (folders)
+      if (folders)
         table
           tr
             th #{__i('Folder')}
             th #{__i('Access')}
-          - each folder in folders
+          each folder in folders
             tr
               td= folder.name
               td
-                - var hasAccess = false;
-                - if (u.acl.indexOf(folder.id) >= 0)
-                  - hasAccess = true;
+                var hasAccess = false;
+                if (u.acl.indexOf(folder.id) >= 0)
+                  hasAccess = true;
                 input(type="checkbox", name="acl[]", value=folder.id, checked=hasAccess)
     p
       input(type="submit", value=__i('Modify'))

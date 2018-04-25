@@ -18,16 +18,16 @@ block main
     strong [#{folder.name}]/#{path}
 
   ul.folders
-    - if (locals.parUrl)
+    if (locals.parUrl)
       li.parent
         a(href=basepath + "/folder/" + folder.id + '?type=dir&' + parUrl) ..
 
-    - each entry in tree
+    each entry in tree
       li(class=[entry.type, "mime-" + entry.mimeBase, "mime-" + entry.mime.replace("/", "-")])
-        - if (entry.type == 'file')
+        if (entry.type == 'file')
           a(href=basepath + "/folder/" + folder.id + '?type=file&' + entry.url)= entry.name
           = " (" + convertSize(entry.fileSize) + ")"
-          - if (folder.pub)
+          if (folder.pub)
             a(href=basepath + "/publicFolder/" + folder.id + '?' + entry.directUrl) (#{__i('Public Link')})
-        - else
+        else
           a(href=basepath + "/folder/" + folder.id + '?type=dir&' + entry.url)= entry.name + '/'

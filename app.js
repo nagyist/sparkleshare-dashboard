@@ -32,6 +32,7 @@ var session = session({
 });
 
 var sass = require('node-sass');
+var sassMiddleware = require('node-sass-middleware');
 
 var app = null;
 if (config.https.enabled) {
@@ -70,7 +71,7 @@ if (lf) {
   app.use(logger(lf));
 }
 app.set('views', __dirname + '/views');
-app.set('view engine', 'jade');
+app.set('view engine', 'pug');
 app.set('basepath', config.basepath);
 app.use(function (req, res, next) {
   if ('x-forwarded-proto' in req.headers && req.headers['x-forwarded-proto'] == 'https') {
@@ -107,12 +108,12 @@ app.use(bodyParser.json());
 app.use(methodOverride());
 app.use(cookieParser());
 app.use(flash());
-app.use(sass.middleware({
+app.use(sassMiddleware({
   src: __dirname,
   dest: pathlib.join(__dirname, 'public'),
   debug: false
 }));
-app.use(express.static(__dirname + '/public'));
+app.use(express.static(pathlib.join(__dirname, 'public')));
 app.use(i18n.init);
 app.use(session);
 app.use(passport.initialize());
@@ -481,7 +482,7 @@ app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, fu
               //if we have a viewable type, render preview/edit view
               res.removeHeader('Content-Type')
               res.render('preview', {
-                'file': filename,   //this file (called file because jade has filename reserved)
+                'file': filename,   //this file (called file because pug has filename reserved)
                 'path': querystring.escape(curPath),    //repo path to file (with filename)
                 'parent': folder,   //parent directory object
                 'parent_repo_path': querystring.escape(pathlib.dirname(curPath)),  //parent path in repo
@@ -648,7 +649,7 @@ app.get('/linkedDevices', middleware.isLogged, function (req, res, next) {
 
 app.get('/linkDevice', middleware.isLogged, function (req, res) {
   var schema = config.https.enabled ? 'https' : 'http';
-  var url = schema + '://' + req.host
+  var url = schema + '://' + req.hostname
   if (config.listen.port != 80) {
     url += ":" + config.listen.port;
   }

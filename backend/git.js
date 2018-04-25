@@ -196,7 +196,7 @@ GitBackend.prototype = {
     var g = spawn(config.backend.git.bin, params, { encoding: 'binary', env: {
       GIT_DIR: this.path
     }});
-    
+
     // under some very weird circumstances the 'exit'
     // event may arise _before_ the 'data' event is triggered
     // and in this case the ondata callback is called with

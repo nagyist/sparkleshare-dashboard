@@ -8,9 +8,9 @@ block main
 
     ul.folder-links
       li
-        - if (parent.pub)
+        if (parent.pub)
           a(href=basepath + "/publicFolder/" + parent.id) (#{__i('Back to folder')})
-        - else
+        else
           a(href=basepath + "/folder/" + parent.id + '?type=dir&path='+ parent_repo_path) #{__i('Back to folder')}
       li
         a(href=basepath + "/folder/" + parent.id + '?type=file&download=force&name='+ file +
