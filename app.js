@@ -160,8 +160,10 @@ if ('development' == env) {
 }
 
 if ('production' == env) {
-  app.use(errors.errorHandler);
-  app.use(express.errorHandler());
+  app.use(require('errorhandler')({
+    dumpExceptions: false,
+    showStack: false
+  }));
 }
 
 // Routes
