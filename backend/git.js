@@ -119,6 +119,10 @@ function parseGitLog(data) {
         entryLine = entryLines[elIndex];
         if (entryLine.charAt(0) == ":") {
           var changeType = entryLine.charAt(37);
+          if (changeType == ".") {
+            //newer git versions
+            changeType = entryLine.charAt(39);
+          }
           var filePath = entryLines[elIndex + 1];
           var toFilePath = "";
 
@@ -202,7 +206,7 @@ GitBackend.prototype = {
     // and in this case the ondata callback is called with
     // an empty output. with this little trick we're synching
     // the results of both callbacks and only return back if
-    // both have been called. this - of course - might be go
+    // both have been called. this - of course - might go
     // totally wrong if some exec call does not write anything
     // to stdout and therefor never triggers the 'data' event ...
     var finalize = function() {
