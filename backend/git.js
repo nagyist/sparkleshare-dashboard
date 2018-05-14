@@ -367,6 +367,7 @@ GitBackend.prototype = {
     }
 
     //enforce unix file ending
+    //TODO: detect previous line ending and keep it
     data = data.replace(/(?:\r\n|\r)/g, '\n')
 
     var temp_dir = config.backend.git.temp
@@ -441,6 +442,7 @@ GitBackend.prototype = {
           callback(null)
         });
       },
+
       function(callback){
         //add the new file
         //console.log("Add new file")

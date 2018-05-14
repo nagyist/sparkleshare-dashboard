@@ -369,7 +369,7 @@ app.get('/publicFolder/:folderId', middleware.isLogged, function (req, res, next
     if (!folder.pub) {
       next(new errors.Permission('This is not a public folder'));
     } else {
-      var filename = req.param('name');
+      var filename = req.query.name;
       if (!filename) {
         filename = 'file';
       }
@@ -415,7 +415,7 @@ app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, fu
       }
 
       //get current repo path from url
-      var curPath = req.param('path');
+      var curPath = req.query.path;
       var parUrl = null;
 
       if (curPath) {
@@ -427,9 +427,9 @@ app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, fu
         });
       }
 
-      if (req.param('type') == 'file') {
+      if (req.query.type == 'file') {
         //show one file
-        var filename = req.param('name');
+        var filename = req.query.name;
         if (!filename) {
           filename = 'file';
         }
@@ -470,7 +470,7 @@ app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, fu
           }
         });
 
-        if (req.param('download') == 'force') {
+        if (req.query.download == 'force') {
           is_editable = false
         }
 
@@ -489,7 +489,7 @@ app.get('/folder/:folderId?', middleware.isLogged, middleware.checkFolderAcl, fu
                 'parent': folder,   //parent directory object
                 'parent_repo_path': querystring.escape(pathlib.dirname(curPath)),  //parent path in repo
                 'data': data,       //file contents
-                'filehash': req.param('hash')
+                'filehash': req.query.hash
               })
               return
             } else {
@@ -532,7 +532,7 @@ app.post('/putFile/:folderId', middleware.isLogged, function (req, res, next) {
       if (error) {
         return next(error);
       }
-      var filepath = req.param('path')
+      var filepath = req.query.path
       if (req.body.content && filepath) {
         //call api method or common helper method to save file
         folder.putFile(req, req.body.content,
@@ -581,7 +581,7 @@ app.get('/download/:folderId', middleware.isLogged, middleware.checkFolderAcl, f
       }
       headersSent = true;
       var filename = 'archive';
-      var path = req.param('path');
+      var path = req.query.path;
       if (path && path != '') {
         filename += '-' + path.replace(/[^\w\d-]/, '_');
       }
