@@ -10,7 +10,7 @@ Api = function(app, dp, fp, mw) {
   middleware = mw;
 
   app.post('/api/getAuthCode', middleware.validateLinkCode, function(req, res) {
-    deviceProvider.createNew(req.param('name'), req.linkCodeForUid, function(error, dev) {
+    deviceProvider.createNew(req.query.name, req.linkCodeForUid, function(error, dev) {
       res.json({
         ident: dev.ident,
         authCode: dev.authCode
@@ -40,7 +40,7 @@ Api = function(app, dp, fp, mw) {
 
   app.get('/api/getFile/:folderId', [middleware.validateAuthCode, middleware.checkFolderAcl,
         middleware.loadFolder], function(req, res, next) {
-    var filename = req.param('name');
+    var filename = req.query.name;
     if (!filename) {
       filename = 'file';
     }
@@ -60,7 +60,7 @@ Api = function(app, dp, fp, mw) {
 
   app.post('/api/putFile/:folderId', [middleware.validateAuthCode, middleware.checkFolderAcl,
         middleware.loadFolder], function(req, res, next) {
-    var filename = req.param('name');
+    var filename = req.query.name;
     if (!filename) {
       filename = 'file';
     }
@@ -105,7 +105,9 @@ Api = function(app, dp, fp, mw) {
         middleware.loadFolder], function(req, res, next) {
     req.loadedFolder.getFolderItemCount(req, function(error, count) {
       if (error) { return next(error); }
-      res.json(count);
+      if (!res.headersSent) { 
+         res.json(count);
+      }
     });
   });
 

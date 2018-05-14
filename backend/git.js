@@ -256,7 +256,7 @@ GitBackend.prototype = {
   },
 
   getRawData: function(req, ondata, next) {
-    var hash = req.param('hash');
+    var hash = req.query.hash;
     if (!hash) {
       return next(new Error('No hash'));
     }
@@ -269,7 +269,7 @@ GitBackend.prototype = {
 
   createArchive: function(req, ondata, next) {
     var arg = 'HEAD';
-    var path = req.param('path');
+    var path = req.query.path;
     if (path) {
       arg += ':' + path;
     }
@@ -277,8 +277,8 @@ GitBackend.prototype = {
   },
 
   getItems: function(req, next) {
-    var baseHash = req.param('hash');
-    var path = req.param('path');
+    var baseHash = req.query.hash;
+    var path = req.query.path;
     if (!path) {
       path = '';
     }
@@ -361,7 +361,7 @@ GitBackend.prototype = {
 
   //overwrite an existing file
   putFile: function(req, data, next) {
-    var path = req.param('path');
+    var path = req.query.path;
     if (!path) {
       next(new Error('No file path given'));
     }
