@@ -26,7 +26,10 @@ function parseList(list, curPath, next) {
       var mimeType = null;
       if (x[1] == 'blob') {
         type = "file";
-        mimeType = mime.lookup(x[4]);
+        mimeType = mime.getType(x[4]);
+        if(mimeType === null) {
+          mimeType = "text/plain"
+        }
       } else if (x[1] == 'tree') {
         type = "dir";
         mimeType = "dir";
@@ -196,6 +199,8 @@ GitBackend.prototype = {
     //add path parameter, needed for older git versions
     params.unshift('--git-dir='+this.path);
 
+    //console.log('git exec: git ' + params);
+
     //call git with all the given parameters
     var g = spawn(config.backend.git.bin, params, { encoding: 'binary', env: {
       GIT_DIR: this.path
@@ -250,6 +255,7 @@ GitBackend.prototype = {
 
     g.on('exit', function(code) {
       exitCode = code;
+      //console.log("git exit code: " + code);
       if(typeof(out) != "undefined" || ignore_output)
         finalize();
     });
@@ -290,7 +296,7 @@ GitBackend.prototype = {
         baseHash = 'HEAD';
       }
 
-      mybackend.execGit(['ls-tree', '-z', '-l', baseHash, ''], function(error, data) {
+      mybackend.execGit(['ls-tree', '-z', '-l', baseHash, '.'], function(error, data) {
         if (error) { return next(error); }
         parseList(data, path, next);
       });
