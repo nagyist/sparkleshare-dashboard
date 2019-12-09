@@ -4,7 +4,6 @@
  * Module dependencies.
  */
 var express = require('express');
-var session = require('express-session');
 var flash = require('connect-flash');
 var logger = require('morgan');
 
@@ -16,11 +15,16 @@ var errors = require('./error');
 var utils = require('./utils');
 var pathlib = require('path');
 
-var RedisStore = require('connect-redis')(session);
-var redis = require('redis');
-var redisClient = redis.createClient();
+const redis = require('redis')
+const ExpressSession = require('express-session');
+let RedisStore = require('connect-redis')(ExpressSession);
 
-var session = session({
+let redisClient = redis.createClient();
+redisClient.unref()
+redisClient.on('error', console.log)
+let redisStore = new RedisStore({ client: redisClient })
+
+let session = ExpressSession({
   cookie: {
     maxAge: config.sessionValidFor
   },
@@ -28,7 +32,7 @@ var session = session({
   saveUninitialized: true,
   rolling: true,
   secret: config.sessionSecret,
-  store: new RedisStore()
+  store: redisStore 
 });
 
 var sass = require('node-sass');
