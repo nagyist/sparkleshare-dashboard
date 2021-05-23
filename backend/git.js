@@ -121,7 +121,7 @@ function parseGitLog(data) {
       for(var elIndex = 0; elIndex < entryLines.length; elIndex++) {
         entryLine = entryLines[elIndex];
         if (entryLine.charAt(0) == ":") {
-          var changeType = entryLine.charAt(37);
+          var changeType = entryLine.charAt(35);
           if (changeType == ".") {
             //newer git versions
             changeType = entryLine.charAt(39);
