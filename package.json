@@ -15,9 +15,9 @@
     "method-override": "^3.0.x",
     "mime": "^2.4.x",
     "morgan": "^1.9.x",
-    "node-sass": "^7.0.1",
-    "node-sass-middleware": "^1.0.1",
-    "passport": "^0.4.x",
+    "node-sass": "^9.0.0",
+    "node-sass-middleware": "^1.1.0",
+    "passport": "^0.6.0",
     "passport-local": "^1.0.x",
     "pug": "^3.0.2",
     "redis": "^3.1.2"
