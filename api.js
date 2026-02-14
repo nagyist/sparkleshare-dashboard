@@ -3,6 +3,7 @@ var folderProvider = null;
 var middleware = null;
 
 var utils = require('./utils');
+var bodyParser = require('body-parser');
 
 Api = function(app, dp, fp, mw) {
   deviceProvider = dp;
@@ -58,20 +59,43 @@ Api = function(app, dp, fp, mw) {
     );
   });
 
-  app.post('/api/putFile/:folderId', [middleware.validateAuthCode, middleware.checkFolderAcl,
+  app.post('/api/putFile/:folderId', [
+        bodyParser.raw({ type: 'application/octet-stream', limit: '50mb' }),
+        middleware.validateAuthCode, middleware.checkFolderAcl,
         middleware.loadFolder], function(req, res, next) {
-    var filename = req.query.name;
-    if (!filename) {
-      filename = 'file';
+    var fileData;
+    if (Buffer.isBuffer(req.body)) {
+      fileData = req.body;
+    } else if (req.body && req.body.data) {
+      fileData = req.body.data;
+    } else {
+      return res.status(400).send('No file data received');
     }
-    res.attachment(filename);
-    //if (req.is('multipart/form-data')
 
-    req.loadedFolder.putFile(req, req.body.data,
+    req.loadedFolder.putFile(req, fileData,
       function(error, data) {
         if (error) { return next(error); }
-        res.write(data);
-        res.end();
+        res.send(data);
+      });
+  });
+
+  app.post('/api/postFile/:folderId', [
+        bodyParser.raw({ type: 'application/octet-stream', limit: '50mb' }),
+        middleware.validateAuthCode, middleware.checkFolderAcl,
+        middleware.loadFolder], function(req, res, next) {
+    var fileData;
+    if (Buffer.isBuffer(req.body)) {
+      fileData = req.body;
+    } else if (req.body && req.body.data) {
+      fileData = req.body.data;
+    } else {
+      return res.status(400).send('No file data received');
+    }
+
+    req.loadedFolder.putFile(req, fileData, { createOnly: true },
+      function(error, data) {
+        if (error) { return next(error); }
+        res.status(201).send(data);
       });
   });
 

@@ -24,11 +24,21 @@ function ISE(msg) {
 }
 util.inherits(ISE, Error);
 
+function Conflict(msg) {
+  this.name = 'Conflict';
+  this.message = msg ? msg : '';
+  Error.call(this, msg);
+  Error.captureStackTrace(this, arguments.callee);
+}
+util.inherits(Conflict, Error);
+
 function errorHandler(err, req, res, next) {
   if (err instanceof NotFound) {
     res.statusCode = 404;
   } else if (err instanceof Permission) {
     res.statusCode = 403;
+  } else if (err instanceof Conflict) {
+    res.statusCode = 409;
   } else {
     res.statusCode = 500;
     return next();
@@ -53,5 +63,6 @@ function errorHandler(err, req, res, next) {
 module.exports = {
   NotFound: NotFound,
   Permission: Permission,
+  Conflict: Conflict,
   errorHandler: errorHandler
 };

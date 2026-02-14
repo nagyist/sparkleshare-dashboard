@@ -55,8 +55,8 @@ Backend.prototype = {
     }
   },
 
-  putFile: function(req, data, next) {
-      this.backend.putFile(req, data, next);
+  putFile: function(req, data, optionsOrNext, maybeNext) {
+      this.backend.putFile(req, data, optionsOrNext, maybeNext);
   }
 };
 

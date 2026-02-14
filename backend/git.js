@@ -1,6 +1,7 @@
 /* vim: set tabstop=2 shiftwidth=2 expandtab: */
 
 var config = require('../config');
+var errors = require('../error');
 
 GitBackend = function (path) {
   this.path = path;
@@ -12,7 +13,6 @@ var mime = require('mime');
 var fs = require('fs');
 var pathlib = require('path');
 var async = require('async');
-var exec = require('child_process').exec;
 
 function parseList(list, curPath, next) {
   var r = list.split(/\0/);
@@ -365,16 +365,33 @@ GitBackend.prototype = {
     });
   },
 
-  //overwrite an existing file
-  putFile: function(req, data, next) {
-    var path = req.query.path;
-    if (!path) {
-      next(new Error('No file path given'));
+  //overwrite an existing file or create a new one
+  putFile: function(req, data, optionsOrNext, maybeNext) {
+    var options, next;
+    if (typeof optionsOrNext === 'function') {
+      options = {};
+      next = optionsOrNext;
+    } else {
+      options = optionsOrNext || {};
+      next = maybeNext;
     }
 
-    //enforce unix file ending
+    var path = req.query.path;
+    if (!path) {
+      return next(new Error('No file path given'));
+    }
+
+    // Prevent path traversal attacks
+    var normalizedPath = pathlib.normalize(path).replace(/\\/g, '/');
+    if (normalizedPath.startsWith('..') || pathlib.isAbsolute(path)) {
+      return next(new Error('Invalid file path'));
+    }
+
+    //enforce unix file ending for text data
     //TODO: detect previous line ending and keep it
-    data = data.replace(/(?:\r\n|\r)/g, '\n')
+    if (typeof data === 'string') {
+      data = data.replace(/(?:\r\n|\r)/g, '\n')
+    }
 
     var temp_dir = config.backend.git.temp
     var wc_dir = pathlib.join(temp_dir, pathlib.basename(this.path))
@@ -393,6 +410,20 @@ GitBackend.prototype = {
     var parent = this
 
     async.series([
+      function(callback){
+        //for create-only mode, check that the file doesn't already exist
+        if (!options.createOnly) {
+          return callback(null);
+        }
+        parent.execGit(['ls-tree', 'HEAD', '--', path], function(error, data) {
+          if (error) { return next(error); }
+          if (data && data.trim().length > 0) {
+            return next(new errors.Conflict('File already exists'));
+          }
+          callback(null);
+        });
+      },
+
       function(callback){
         //clone repo to get a working copy (files are hard linked)
         //sparse checkout of only that directory is maybe also worth looking into (this will copy files however)
@@ -431,9 +462,13 @@ GitBackend.prototype = {
       },
 
       function(callback){
-        //get original path and file
+        //get original path and file (ignore errors when creating new files)
         //console.log("Checkout file")
-        parent.execGit(['--work-tree=' + wc_dir, 'checkout', 'HEAD', '--', path, 'ignore_output'],
+        var checkoutArgs = ['--work-tree=' + wc_dir, 'checkout', 'HEAD', '--', path, 'ignore_output'];
+        if (options.createOnly) {
+          checkoutArgs.push('ignore_return_code');
+        }
+        parent.execGit(checkoutArgs,
           function(error, data){
             if (error) { return next(error); }
             callback(null)
@@ -441,8 +476,16 @@ GitBackend.prototype = {
       },
 
       function(callback){
+        //ensure parent directory exists (needed for new files in subdirectories)
+        var fileDir = pathlib.dirname(pathlib.join(wc_dir, path));
+        fs.mkdir(fileDir, { recursive: true }, function(error) {
+          if (error) { return next(error); }
+          callback(null);
+        });
+      },
+
+      function(callback){
         //save data into the file given by path
-        //fs.mkdir(pathlib.basename(path), 0777, true, function(){ ... })
         fs.writeFile(pathlib.join(wc_dir, path), data, function(error){
           if(error) { return next(error); }
           callback(null)
@@ -490,14 +533,12 @@ GitBackend.prototype = {
             var path_rand = path.replace(/\/$/, "")+rand
             fs.renameSync(path, path_rand)
 
-            //async delete using rm
-            var cmd = "rm -Rf " + path_rand
-            exec(cmd, function(error, stdout, stderr) {
-              // command output is in stdout
-              if (!error)
+            //async delete using spawn (avoids shell injection via exec)
+            spawn('rm', ['-Rf', path_rand]).on('exit', function(code) {
+              if (code === 0)
                 console.log("deleted " + path_rand)
               else
-                console.log("error while deleting working copy: " + error)
+                console.log("error while deleting working copy, exit code: " + code)
             });
 
             /*

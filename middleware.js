@@ -79,7 +79,7 @@ module.exports = {
       next(new errors.NotFound('No folder specified'));
     } else {
       folderProvider.findById(req.params.folderId, function(error, folder) {
-        if (error || !folder) { next(new errors.NotFound('Folder not found')); }
+        if (error || !folder) { return next(new errors.NotFound('Folder not found')); }
         req.loadedFolder = folder;
         next();
       });
