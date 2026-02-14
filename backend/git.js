@@ -121,11 +121,10 @@ function parseGitLog(data) {
       for(var elIndex = 0; elIndex < entryLines.length; elIndex++) {
         entryLine = entryLines[elIndex];
         if (entryLine.charAt(0) == ":") {
-          var changeType = entryLine.charAt(35);
-          if (changeType == ".") {
-            //newer git versions
-            changeType = entryLine.charAt(39);
-          }
+          //extract change type from raw diff line
+          //format: :old_mode new_mode old_hash new_hash status
+          var parts = entryLine.split(/\s+/);
+          var changeType = parts.length >= 5 ? parts[4].charAt(0) : null;
           var filePath = entryLines[elIndex + 1];
           var toFilePath = "";
 
