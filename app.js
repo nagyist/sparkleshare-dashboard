@@ -35,12 +35,11 @@ let session = ExpressSession({
   store: redisStore 
 });
 
-var sass = require('node-sass');
-var sassMiddleware = require('node-sass-middleware');
+var sass = require('sass');
+var fs = require('fs');
 
 var app = null;
 if (config.https.enabled) {
-  var fs = require("fs");
   var https = require("https");
 
   var privateKey = fs.readFileSync(config.https.key).toString();
@@ -112,11 +111,35 @@ app.use(bodyParser.json());
 app.use(methodOverride());
 app.use(cookieParser());
 app.use(flash());
-app.use(sassMiddleware({
-  src: __dirname,
-  dest: pathlib.join(__dirname, 'public'),
-  debug: false
-}));
+app.use(function(req, res, next) {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+  if (!/\.css$/.test(req.path)) return next();
+
+  var scssPath = pathlib.join(__dirname, req.path.replace(/\.css$/, '.scss'));
+  var cssPath = pathlib.join(__dirname, 'public', req.path);
+
+  try {
+    var srcStat = fs.statSync(scssPath);
+  } catch(e) {
+    return next();
+  }
+
+  try {
+    var destStat = fs.statSync(cssPath);
+    if (destStat.mtime >= srcStat.mtime) return next();
+  } catch(e) {
+    // CSS doesn't exist yet, compile it
+  }
+
+  try {
+    var result = sass.compile(scssPath);
+    fs.mkdirSync(pathlib.dirname(cssPath), { recursive: true });
+    fs.writeFileSync(cssPath, result.css);
+  } catch(e) {
+    console.error('Sass compilation error:', e.message);
+  }
+  next();
+});
 app.use(express.static(pathlib.join(__dirname, 'public')));
 app.use(i18n.init);
 app.use(session);
