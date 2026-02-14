@@ -11,13 +11,13 @@ LocalUserProvider = function (options, redisClient, deviceProvider) {
     process.nextTick(function () {
       provider.findByLogin(login, function (error, user) {
         if (!user) {
-          return next(new Error('Invalid login'))
+          return next(null, false, { message: 'Invalid login' })
         }
 
         if (user.checkPassword(password)) {
           return next(null, user);
         } else {
-          return next(new Error('Invalid login'))
+          return next(null, false, { message: 'Invalid login' })
         }
       })
     })

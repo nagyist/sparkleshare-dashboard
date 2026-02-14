@@ -217,13 +217,17 @@ GitBackend.prototype = {
     var finalize = function() {
     //handle data and exit events and call handler function that was passed
       if (exitCode && !ignore_return_code) {
-        return next(new Error('GIT failed'));
+        var errMsg = 'GIT failed (exit code ' + exitCode + '): git ' + params.join(' ');
+        if (stderrOutput) {
+          errMsg += '\n' + stderrOutput.trim();
+        }
+        return next(new Error(errMsg));
       } else {
         return next(null, out);
       }
     };
 
-    var exitCode, out;
+    var exitCode, out, stderrOutput = '';
     if (ondata) {
       g.stdout.on('data', function(data) {
         out = true;
@@ -243,6 +247,7 @@ GitBackend.prototype = {
 
     g.stderr.on('data', function(data) {
        //console.log('git stderr: ' + data);
+       stderrOutput += data.toString('utf8');
        //in case there is stderr output, also allow finalizing on exit for calls that
        //don't return data (not a proper solution really)
        if (typeof(out) == 'undefined') {
@@ -415,7 +420,7 @@ GitBackend.prototype = {
         if (!options.createOnly) {
           return callback(null);
         }
-        parent.execGit(['ls-tree', 'HEAD', '--', path], function(error, data) {
+        parent.execGit(['ls-tree', 'HEAD', '--', path, 'ignore_output'], function(error, data) {
           if (error) { return next(error); }
           if (data && data.trim().length > 0) {
             return next(new errors.Conflict('File already exists'));
@@ -462,12 +467,10 @@ GitBackend.prototype = {
       },
 
       function(callback){
-        //get original path and file (ignore errors when creating new files)
+        //get original path and file (ignore errors when file doesn't exist yet)
         //console.log("Checkout file")
-        var checkoutArgs = ['--work-tree=' + wc_dir, 'checkout', 'HEAD', '--', path, 'ignore_output'];
-        if (options.createOnly) {
-          checkoutArgs.push('ignore_return_code');
-        }
+        var checkoutArgs = ['--work-tree=' + wc_dir, 'checkout', 'HEAD', '--', path, 'ignore_output',
+          'ignore_return_code'];
         parent.execGit(checkoutArgs,
           function(error, data){
             if (error) { return next(error); }
