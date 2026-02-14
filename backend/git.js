@@ -202,9 +202,7 @@ GitBackend.prototype = {
     //console.log('git exec: git ' + params);
 
     //call git with all the given parameters
-    var g = spawn(config.backend.git.bin, params, { encoding: 'binary', env: {
-      GIT_DIR: this.path
-    }});
+    var g = spawn(config.backend.git.bin, params, { encoding: 'binary' });
 
     // under some very weird circumstances the 'exit'
     // event may arise _before_ the 'data' event is triggered
@@ -413,6 +411,26 @@ GitBackend.prototype = {
     //otherwise: fs.mkdir(temp_dir, 0755, fsErrorHandler);
 
     var parent = this
+    var orig_path = parent.path
+
+    function cleanupWorkingCopy() {
+      parent.path = orig_path
+      if (fs.existsSync(wc_dir)) {
+        var rand = Math.floor(Math.random() * 10) + parseInt(new Date().getTime()).toString(36)
+        var path_rand = wc_dir.replace(/\/$/, "") + rand
+        try {
+          fs.renameSync(wc_dir, path_rand)
+          spawn('rm', ['-Rf', path_rand]).on('exit', function(code) {
+            if (code === 0)
+              console.log("deleted " + path_rand)
+            else
+              console.log("error while deleting working copy, exit code: " + code)
+          });
+        } catch(e) {
+          console.log("error during cleanup: " + e.message)
+        }
+      }
+    }
 
     async.series([
       function(callback){
@@ -421,59 +439,53 @@ GitBackend.prototype = {
           return callback(null);
         }
         parent.execGit(['ls-tree', 'HEAD', '--', path, 'ignore_output'], function(error, data) {
-          if (error) { return next(error); }
+          if (error) { return callback(error); }
           if (data && data.trim().length > 0) {
-            return next(new errors.Conflict('File already exists'));
+            return callback(new errors.Conflict('File already exists'));
           }
           callback(null);
         });
       },
 
       function(callback){
-        //clone repo to get a working copy (files are hard linked)
-        //sparse checkout of only that directory is maybe also worth looking into (this will copy files however)
-        //http://stackoverflow.com/questions/600079/is-there-any-way-to-clone-a-git-repositorys-sub-directory-only
-        parent.execGit(['clone', '-n', parent.path, wc_dir], function(error, data){
-          if (error != null) { return next(error); }
+        //clone repo to get a working copy
+        parent.execGit(['clone', '--shared', '-n', parent.path, wc_dir], function(error, data){
+          if (error != null) { return callback(error); }
           callback(null)
         });
       },
 
       function(callback){
         //change current directory to new working copy
-        parent.old_this_path = parent.path
         parent.path = pathlib.join(wc_dir, '.git')
         callback(null)
       },
 
       //set username and email for new working copy
       function(callback){
-        //console.log("Set user.name")
         parent.execGit(['config', 'user.name', req.user.name, 'ignore_output'],
           function(error, data){
-            if (error) { return next(error); }
+            if (error) { return callback(error); }
             callback(null)
         });
       },
 
       function(callback){
         //TODO: add email field to UserProvider
-        //console.log("Set user.email")
         parent.execGit(['config', 'user.email', req.user.login+'@'+req.user.deviceName,
           'ignore_output'], function(error, data){
-            if (error) { return next(error); }
+            if (error) { return callback(error); }
             callback(null)
         });
       },
 
       function(callback){
         //get original path and file (ignore errors when file doesn't exist yet)
-        //console.log("Checkout file")
         var checkoutArgs = ['--work-tree=' + wc_dir, 'checkout', 'HEAD', '--', path, 'ignore_output',
           'ignore_return_code'];
         parent.execGit(checkoutArgs,
           function(error, data){
-            if (error) { return next(error); }
+            if (error) { return callback(error); }
             callback(null)
         });
       },
@@ -482,7 +494,7 @@ GitBackend.prototype = {
         //ensure parent directory exists (needed for new files in subdirectories)
         var fileDir = pathlib.dirname(pathlib.join(wc_dir, path));
         fs.mkdir(fileDir, { recursive: true }, function(error) {
-          if (error) { return next(error); }
+          if (error) { return callback(error); }
           callback(null);
         });
       },
@@ -490,85 +502,47 @@ GitBackend.prototype = {
       function(callback){
         //save data into the file given by path
         fs.writeFile(pathlib.join(wc_dir, path), data, function(error){
-          if(error) { return next(error); }
+          if(error) { return callback(error); }
           callback(null)
         });
       },
 
       function(callback){
         //add the new file
-        //console.log("Add new file")
         parent.execGit(['--work-tree=' + wc_dir, 'add', pathlib.join(wc_dir, path), 'ignore_output'],
           function(error, data){
-            if (error) { return next(error); }
+            if (error) { return callback(error); }
             callback(null)
         });
       },
 
       function(callback){
         //commit only this new file
-        //console.log("Commit new file")
         parent.execGit(['--work-tree=' + wc_dir, 'commit', pathlib.join(wc_dir, path), '-m',
-          '/ ‘' + path + '‘', "ignore_return_code"], function(error, data){
-            if (error) { return next(error); }
+          '/ ‘' + path + '’', "ignore_return_code"], function(error, data){
+            if (error) { return callback(error); }
             callback(null)
         });
       },
 
       function(callback){
         //push the commit
-        //console.log("Push commit")
         parent.execGit(['--work-tree=' + wc_dir, 'push'],
           function(error, data){
-            if (error) { return next(error); }
+            if (error) { return callback(error); }
             callback(null)
         });
-      },
-      function(callback){
-        //delete working copy again
-
-        //console.log("Delete working copy")
-        deleteFolderRecursive = function(path) {
-          var files = [];
-          if( fs.existsSync(path) ) {
-            //rename to random directory name to get out of the way for new checkouts
-            var rand = Math.floor(Math.random() * 10) + parseInt(new Date().getTime()).toString(36)
-            var path_rand = path.replace(/\/$/, "")+rand
-            fs.renameSync(path, path_rand)
-
-            //async delete using spawn (avoids shell injection via exec)
-            spawn('rm', ['-Rf', path_rand]).on('exit', function(code) {
-              if (code === 0)
-                console.log("deleted " + path_rand)
-              else
-                console.log("error while deleting working copy, exit code: " + code)
-            });
-
-            /*
-            files = fs.readdirSync(path);
-            files.forEach(function(file,index){
-                var curPath = pathlib.join(path, file);
-                if(fs.lstatSync(curPath).isDirectory()) { // recurse
-                    deleteFolderRecursive(curPath);
-                } else { // delete file
-                    fs.unlinkSync(curPath);
-                }
-            });
-            fs.rmdirSync(path);
-            */
-          }
-        };
-        deleteFolderRecursive(wc_dir);
-
-        callback(null)
-      },
-      function(callback){
-        //console.log("finished editing file")
-        parent.path = parent.old_this_path
-        callback(null)
-        next(null, "Ok.")
       }
-    ]);
+    ], function(error) {
+      //always clean up, whether we succeeded or failed
+      cleanupWorkingCopy();
+
+      if (error) {
+        next(error);
+      } else {
+        next(null, "Ok.");
+      }
+    });
   }
 };
 
